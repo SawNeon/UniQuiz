@@ -4,10 +4,14 @@ import br.com.unimed.uniquiz.conteudo.aplicacao.ConteudoPublicado;
 import br.com.unimed.uniquiz.conteudo.aplicacao.ServicoDeConteudoPublicado;
 import br.com.unimed.uniquiz.jogo.dominio.ProgressoNaTrilha;
 import br.com.unimed.uniquiz.jogo.dominio.ProgressoNaTrilha.SituacaoDaLicao;
+import br.com.unimed.uniquiz.jogo.dominio.SequenciaDeDias;
 import br.com.unimed.uniquiz.jogo.dominio.StatusDaTentativa;
+import br.com.unimed.uniquiz.jogo.persistencia.SequenciaDiaria;
+import br.com.unimed.uniquiz.jogo.persistencia.SequenciaDiariaRepository;
 import br.com.unimed.uniquiz.jogo.persistencia.TentativaRepository;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +32,15 @@ public class ServicoDeProgresso {
 
     private final ServicoDeConteudoPublicado conteudo;
     private final TentativaRepository tentativas;
+    private final SequenciaDiariaRepository sequencias;
 
-    public ServicoDeProgresso(ServicoDeConteudoPublicado conteudo, TentativaRepository tentativas) {
+    public ServicoDeProgresso(
+            ServicoDeConteudoPublicado conteudo,
+            TentativaRepository tentativas,
+            SequenciaDiariaRepository sequencias) {
         this.conteudo = conteudo;
         this.tentativas = tentativas;
+        this.sequencias = sequencias;
     }
 
     @Transactional(readOnly = true)
@@ -56,6 +65,11 @@ public class ServicoDeProgresso {
                             licoes);
                 })
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<SequenciaDeDias> sequencia(Long colaboradorId) {
+        return sequencias.findById(colaboradorId).map(SequenciaDiaria::paraDominio);
     }
 
     @Transactional(readOnly = true)
