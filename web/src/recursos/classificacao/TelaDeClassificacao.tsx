@@ -17,7 +17,11 @@ export function TelaDeClassificacao() {
 
   const { temporada, topo, minhaPosicao, pontosParaSubir } = classificacao.data;
   if (!temporada) {
-    return <p className="py-10 text-center text-lg font-bold">Nenhuma temporada aberta agora. A próxima começa em breve!</p>;
+    return (
+      <p className="py-10 text-center text-lg font-bold">
+        Nenhuma temporada aberta agora. A próxima começa em breve!
+      </p>
+    );
   }
 
   const foraDoTopo = minhaPosicao && !topo.some((posicao) => posicao.souEu);
@@ -28,7 +32,9 @@ export function TelaDeClassificacao() {
         <h1 className="text-3xl font-extrabold">Classificação</h1>
         <p className="font-bold">{temporada.nome}</p>
         {temporada.premioTexto && (
-          <p className="mt-2 rounded-padrao bg-aviso p-3 font-bold">Prêmio do 1º lugar: {temporada.premioTexto}</p>
+          <p className="mt-2 rounded-padrao bg-aviso p-3 font-bold">
+            Prêmio do 1º lugar: {temporada.premioTexto}
+          </p>
         )}
       </header>
 

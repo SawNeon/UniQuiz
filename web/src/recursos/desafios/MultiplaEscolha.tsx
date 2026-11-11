@@ -25,11 +25,20 @@ export function MultiplaEscolha({
   }
 
   return (
-    <div role="radiogroup" aria-label={desafio.enunciado} onKeyDown={navegarPorSetas} className="flex flex-col gap-3">
+    <div
+      role="radiogroup"
+      aria-label={desafio.enunciado}
+      onKeyDown={navegarPorSetas}
+      className="flex flex-col gap-3"
+    >
       {alternativas.map((alternativa) => {
         const escolhida = resposta?.alternativaId === alternativa.id;
         const destaque =
-          escolhida && correcao ? (correcao.correta ? "border-primaria bg-acerto-suave" : "border-texto bg-erro-suave") : "";
+          escolhida && correcao
+            ? correcao.correta
+              ? "border-primaria bg-acerto-suave"
+              : "border-texto bg-erro-suave"
+            : "";
         return (
           <button
             key={alternativa.id}

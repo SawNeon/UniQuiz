@@ -40,7 +40,9 @@ export function acertouNaPrevia(dados: ConteudoAdmin, resposta: RespostaDoColabo
   switch (dados.tipo) {
     case "MULTIPLA_ESCOLHA": {
       const escolhida = (resposta as RespostaMultiplaEscolha).alternativaId;
-      return dados.conteudo.alternativas.some((alternativa) => alternativa.id === escolhida && alternativa.correta);
+      return dados.conteudo.alternativas.some(
+        (alternativa) => alternativa.id === escolhida && alternativa.correta,
+      );
     }
     case "VERDADEIRO_OU_FALSO":
       return (resposta as RespostaVerdadeiroOuFalso).valor === dados.conteudo.verdadeira;

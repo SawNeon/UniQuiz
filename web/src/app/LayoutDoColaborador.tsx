@@ -16,7 +16,10 @@ export function LayoutDoColaborador() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
       <header className="flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-1.5" aria-label={`Sequência de ${perfil.data?.diasSeguidos ?? 0} dias`}>
+        <div
+          className="flex items-center gap-1.5"
+          aria-label={`Sequência de ${perfil.data?.diasSeguidos ?? 0} dias`}
+        >
           <Icone nome="chama" className="fill-energia text-energia" />
           <span className="font-extrabold">{perfil.data?.diasSeguidos ?? 0} dias</span>
         </div>

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import { enderecoDoPdf, usePerfil, useSair } from "../../api/consultas";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando } from "../../componentes/ui/Estados";
-import { Icone, iconeDoTrofeu } from "../../componentes/ui/Icone";
+import { Icone, IconeDoTrofeu } from "../../componentes/ui/Icone";
 
 function dataCurta(data: string): string {
   return new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR");
@@ -35,7 +35,9 @@ export function TelaDePerfil() {
         </div>
         <div className="rounded-padrao bg-neutro p-4">
           <dt className="text-sm font-bold">Pontos na temporada</dt>
-          <dd className="font-numeros text-4xl font-bold">{dados.pontosNaTemporada.toLocaleString("pt-BR")}</dd>
+          <dd className="font-numeros text-4xl font-bold">
+            {dados.pontosNaTemporada.toLocaleString("pt-BR")}
+          </dd>
           <dd className="text-sm">{dados.pontosTotais.toLocaleString("pt-BR")} no total</dd>
         </div>
         <div className="col-span-2 flex items-center gap-3 rounded-padrao bg-neutro p-4">
@@ -58,7 +60,10 @@ export function TelaDePerfil() {
         ) : (
           <ul className="flex flex-col gap-2">
             {dados.certificados.map((certificado) => (
-              <li key={certificado.codigo} className="flex items-center gap-3 rounded-padrao bg-acerto-suave p-3">
+              <li
+                key={certificado.codigo}
+                className="flex items-center gap-3 rounded-padrao bg-acerto-suave p-3"
+              >
                 <Icone nome="certificado" tamanho={28} />
                 <div className="flex-1">
                   <p className="font-extrabold">{certificado.modulo}</p>
@@ -90,7 +95,11 @@ export function TelaDePerfil() {
                 key={trofeu.codigo}
                 className={`flex flex-col items-center gap-2 rounded-padrao p-4 text-center ${conquistado ? "bg-conquista" : "bg-neutro"}`}
               >
-                <Icone nome={conquistado ? iconeDoTrofeu(trofeu.icone) : "cadeado"} tamanho={32} />
+                {conquistado ? (
+                  <IconeDoTrofeu icone={trofeu.icone} tamanho={32} />
+                ) : (
+                  <Icone nome="cadeado" tamanho={32} />
+                )}
                 <span className="font-extrabold">{trofeu.nome}</span>
                 <span className="text-sm">{trofeu.descricao}</span>
                 <span className="sr-only">{conquistado ? "Conquistado" : "Ainda não conquistado"}</span>
@@ -102,7 +111,9 @@ export function TelaDePerfil() {
 
       <Botao
         variante="secundario"
-        onClick={() => sair.mutate(undefined, { onSuccess: () => void navegar("/entrar", { replace: true }) })}
+        onClick={() =>
+          sair.mutate(undefined, { onSuccess: () => void navegar("/entrar", { replace: true }) })
+        }
       >
         Não sou eu
       </Botao>

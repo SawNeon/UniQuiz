@@ -29,10 +29,13 @@ export function PainelDeCorrecao({ correcao }: { correcao: Correcao }) {
       <p>{correcao.explicacao}</p>
       {pontos > 0 && (
         <p className="font-numeros text-xl font-bold">
-          +{pontos} pontos{correcao.bonusDeSequencia > 0 ? ` (inclui ${correcao.bonusDeSequencia} de sequência)` : ""}
+          +{pontos} pontos
+          {correcao.bonusDeSequencia > 0 ? ` (inclui ${correcao.bonusDeSequencia} de sequência)` : ""}
         </p>
       )}
-      {correcao.segundaChance && <p className="text-sm font-bold">Segunda chance: não vale pontos, mas vale aprender.</p>}
+      {correcao.segundaChance && (
+        <p className="text-sm font-bold">Segunda chance: não vale pontos, mas vale aprender.</p>
+      )}
     </div>
   );
 }

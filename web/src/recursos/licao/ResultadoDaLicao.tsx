@@ -4,7 +4,7 @@ import { useEmitirCertificado, enderecoDoPdf } from "../../api/consultas";
 import type { MotivoDosPontos, ResultadoDaLicao as Resultado } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
-import { Icone, iconeDoTrofeu } from "../../componentes/ui/Icone";
+import { Icone, IconeDoTrofeu } from "../../componentes/ui/Icone";
 import { Mascote } from "../../mascote/Mascote";
 
 const MOTIVOS: Record<MotivoDosPontos, string> = {
@@ -25,10 +25,16 @@ export function ResultadoDaLicao({ resultado }: { resultado: Resultado }) {
 
   return (
     <div className="flex flex-col items-center gap-6 py-6 text-center">
-      <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}>
+      <motion.div
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring" }}
+      >
         <Mascote estado={resultado.perfeita ? "comemorando" : "feliz"} tamanho={140} />
       </motion.div>
-      <h1 className="text-3xl font-extrabold">{resultado.perfeita ? "Lição perfeita!" : "Lição concluída!"}</h1>
+      <h1 className="text-3xl font-extrabold">
+        {resultado.perfeita ? "Lição perfeita!" : "Lição concluída!"}
+      </h1>
 
       <dl className="grid w-full grid-cols-3 gap-3">
         <div className="rounded-padrao bg-neutro p-3">
@@ -70,7 +76,7 @@ export function ResultadoDaLicao({ resultado }: { resultado: Resultado }) {
           animate={{ y: 0, opacity: 1 }}
           className="flex w-full items-center gap-4 rounded-padrao bg-conquista p-4 text-left"
         >
-          <Icone nome={iconeDoTrofeu(trofeu.icone)} tamanho={36} />
+          <IconeDoTrofeu icone={trofeu.icone} tamanho={36} />
           <div>
             <p className="font-extrabold">Troféu novo: {trofeu.nome}</p>
             <p className="text-sm">{trofeu.descricao}</p>

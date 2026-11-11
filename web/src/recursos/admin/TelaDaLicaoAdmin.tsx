@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
-import { chavesAdmin, useDesafiosAdmin, useDuplicarDesafio, useModulosAdmin, useOrdem, useStatus } from "../../api/admin";
+import {
+  chavesAdmin,
+  useDesafiosAdmin,
+  useDuplicarDesafio,
+  useModulosAdmin,
+  useOrdem,
+  useStatus,
+} from "../../api/admin";
 import type { DesafioParaAdmin } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
@@ -25,7 +32,9 @@ export function TelaDaLicaoAdmin() {
   const duplicar = useDuplicarDesafio(licaoId);
   const ordem = useOrdem(`/admin/licoes/${licaoId}/desafios/ordem`, [chavesAdmin.desafios(licaoId)]);
 
-  const licao = modulos.data?.flatMap((modulo) => modulo.licoes).find((candidata) => candidata.id === licaoId);
+  const licao = modulos.data
+    ?.flatMap((modulo) => modulo.licoes)
+    .find((candidata) => candidata.id === licaoId);
   const erro = status.error ?? duplicar.error ?? ordem.error;
 
   return (

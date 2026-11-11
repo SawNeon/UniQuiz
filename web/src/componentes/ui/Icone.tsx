@@ -56,7 +56,9 @@ const desenhos = {
       <path d="M9 12l2 2 4-4" />
     </>
   ),
-  chama: <path d="M12 2c3 4 7 6.5 7 11.5A7 7 0 0 1 5 13.5c0-3 1.8-4.6 3-6.5.8 2 2 3 4 3.2C12 7.5 11.5 4.5 12 2z" />,
+  chama: (
+    <path d="M12 2c3 4 7 6.5 7 11.5A7 7 0 0 1 5 13.5c0-3 1.8-4.6 3-6.5.8 2 2 3 4 3.2C12 7.5 11.5 4.5 12 2z" />
+  ),
   estrela: <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />,
   passo: (
     <>
@@ -132,6 +134,6 @@ export function Icone({ nome, tamanho = 24, strokeWidth = 2, ...resto }: PropsIc
   );
 }
 
-export function iconeDoTrofeu(icone: string): NomeDoIcone {
-  return icone in desenhos ? (icone as NomeDoIcone) : "trofeu";
+export function IconeDoTrofeu({ icone, ...resto }: Omit<PropsIcone, "nome"> & { icone: string }) {
+  return <Icone nome={icone in desenhos ? (icone as NomeDoIcone) : "trofeu"} {...resto} />;
 }

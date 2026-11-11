@@ -7,7 +7,10 @@ test("colaborador entra, faz uma lição e vê a classificação", async ({ page
   await page.getByRole("button", { name: "Bruno Teste" }).click();
   await page.getByRole("button", { name: "Sim, sou eu" }).click();
 
-  await page.getByRole("link", { name: /Começar a lição/ }).first().click();
+  await page
+    .getByRole("link", { name: /Começar a lição/ })
+    .first()
+    .click();
 
   for (let passo = 0; passo < 10; passo += 1) {
     const resultado = page.getByRole("heading", { name: /Lição (perfeita|concluída)!/ });

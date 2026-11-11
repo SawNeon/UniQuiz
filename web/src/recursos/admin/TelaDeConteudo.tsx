@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { chavesAdmin, useCriarLicao, useModulosAdmin, useOrdem, useRenomearLicao, useStatus } from "../../api/admin";
+import {
+  chavesAdmin,
+  useCriarLicao,
+  useModulosAdmin,
+  useOrdem,
+  useRenomearLicao,
+  useStatus,
+} from "../../api/admin";
 import type { ModuloParaAdmin } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
@@ -26,8 +33,8 @@ export function TelaDeConteudo() {
         {!criando && <Botao onClick={() => setCriando(true)}>Novo módulo</Botao>}
       </div>
       <p>
-        O colaborador vê só o que está publicado. Publique os desafios, depois a lição (de 5 a 8 desafios) e por último o
-        módulo.
+        O colaborador vê só o que está publicado. Publique os desafios, depois a lição (de 5 a 8 desafios) e
+        por último o módulo.
       </p>
       {criando && <FormularioDeModulo aoTerminar={() => setCriando(false)} />}
       {ordem.isError && <MensagemDeErro erro={ordem.error} />}
@@ -64,9 +71,17 @@ function CartaoDoModulo({
   const erro = statusDoModulo.error ?? statusDaLicao.error ?? criarLicao.error ?? ordemDasLicoes.error;
 
   return (
-    <section aria-labelledby={`modulo-${modulo.id}`} className="flex flex-col gap-4 rounded-padrao bg-neutro/60 p-4">
+    <section
+      aria-labelledby={`modulo-${modulo.id}`}
+      className="flex flex-col gap-4 rounded-padrao bg-neutro/60 p-4"
+    >
       <div className="flex flex-wrap items-center gap-3">
-        <BotoesDeOrdem itens={todos} indice={indice} aoReordenar={aoReordenar} nome={`o módulo ${modulo.titulo}`} />
+        <BotoesDeOrdem
+          itens={todos}
+          indice={indice}
+          aoReordenar={aoReordenar}
+          nome={`o módulo ${modulo.titulo}`}
+        />
         <h2 id={`modulo-${modulo.id}`} className="flex-1 text-xl font-extrabold">
           {modulo.titulo}
         </h2>
@@ -98,7 +113,10 @@ function CartaoDoModulo({
               status={licao.status}
               aoMudar={(status) => statusDaLicao.mutate({ id: licao.id, status })}
             />
-            <Link to={`/admin/licoes/${licao.id}`} className="min-h-11 content-center rounded-xl bg-primaria px-4 font-extrabold text-white">
+            <Link
+              to={`/admin/licoes/${licao.id}`}
+              className="min-h-11 content-center rounded-xl bg-primaria px-4 font-extrabold text-white"
+            >
               Desafios
             </Link>
           </li>
@@ -110,7 +128,10 @@ function CartaoDoModulo({
         onSubmit={(evento) => {
           evento.preventDefault();
           if (novaLicao.trim()) {
-            criarLicao.mutate({ moduloId: modulo.id, titulo: novaLicao }, { onSuccess: () => setNovaLicao("") });
+            criarLicao.mutate(
+              { moduloId: modulo.id, titulo: novaLicao },
+              { onSuccess: () => setNovaLicao("") },
+            );
           }
         }}
       >

@@ -15,7 +15,10 @@ const esquema = z
     fim: z.string().min(1, "Informe o fim."),
     premioTexto: z.string().max(300),
   })
-  .refine((dados) => dados.fim >= dados.inicio, { path: ["fim"], message: "O fim precisa ser depois do início." });
+  .refine((dados) => dados.fim >= dados.inicio, {
+    path: ["fim"],
+    message: "O fim precisa ser depois do início.",
+  });
 
 type DadosDaTemporada = z.infer<typeof esquema>;
 
@@ -78,7 +81,9 @@ function FormularioDeTemporada({ temporada, aoTerminar }: { temporada?: Temporad
   return (
     <form
       className="grid gap-4 rounded-padrao border-2 border-neutro p-4 sm:grid-cols-2"
-      onSubmit={handleSubmit((dados) => salvar.mutate({ id: temporada?.id, ...dados }, { onSuccess: aoTerminar }))}
+      onSubmit={handleSubmit((dados) =>
+        salvar.mutate({ id: temporada?.id, ...dados }, { onSuccess: aoTerminar }),
+      )}
     >
       <Campo rotulo="Nome" erro={errors.nome?.message}>
         <Entrada placeholder="Dezembro de 2026" {...register("nome")} />

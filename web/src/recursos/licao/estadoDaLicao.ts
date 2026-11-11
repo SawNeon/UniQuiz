@@ -65,7 +65,9 @@ export function desafioAtual(estado: Pick<EstadoDaLicao, "tentativa" | "fila">):
   return estado.tentativa?.desafios.find((desafio) => desafio.id === id) ?? null;
 }
 
-export function totalDePassos(estado: Pick<EstadoDaLicao, "tentativa" | "segundaRodada" | "pendentes">): number {
+export function totalDePassos(
+  estado: Pick<EstadoDaLicao, "tentativa" | "segundaRodada" | "pendentes">,
+): number {
   const base = estado.tentativa?.desafios.length ?? 0;
   return estado.segundaRodada ? base + estado.pendentes.length : base;
 }

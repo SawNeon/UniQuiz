@@ -49,7 +49,7 @@ export const api = {
   post: <T = void>(caminho: string, corpo?: Corpo) => requisitar<T>("POST", caminho, corpo),
   put: <T>(caminho: string, corpo: Corpo) => requisitar<T>("PUT", caminho, corpo),
   patch: <T = void>(caminho: string, corpo: Corpo) => requisitar<T>("PATCH", caminho, corpo),
-  delete: (caminho: string) => requisitar<void>("DELETE", caminho),
+  delete: (caminho: string) => requisitar<undefined>("DELETE", caminho),
 };
 
 export function naoAutenticado(erro: unknown): boolean {

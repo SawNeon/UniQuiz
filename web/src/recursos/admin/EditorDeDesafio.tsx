@@ -13,7 +13,8 @@ import type {
 } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
-import { ComponenteDoDesafio, respostaCompleta } from "../desafios/ComponenteDoDesafio";
+import { ComponenteDoDesafio } from "../desafios/ComponenteDoDesafio";
+import { respostaCompleta } from "../desafios/respostaCompleta";
 import { AreaDeTexto, Campo, Entrada } from "./componentes";
 import { desfazerLacuna, transformarEmLacuna } from "./lacunas";
 import { acertouNaPrevia, paraPublico } from "./previa";
@@ -73,7 +74,9 @@ export function EditorDeDesafio({
   const [dados, setDados] = useState<DadosDoDesafio>(() => dadosIniciais(desafio));
   const salvar = useSalvarDesafio(licaoId);
 
-  function atualizar(parcial: Partial<Pick<DadosDoDesafio, "enunciado" | "dificuldade" | "pontos" | "explicacao" | "dica">>) {
+  function atualizar(
+    parcial: Partial<Pick<DadosDoDesafio, "enunciado" | "dificuldade" | "pontos" | "explicacao" | "dica">>,
+  ) {
     setDados((atual) => ({ ...atual, ...parcial }));
   }
 
@@ -92,8 +95,8 @@ export function EditorDeDesafio({
       >
         {desafio?.status === "PUBLICADO" && (
           <p className="rounded-padrao bg-info p-3 text-sm font-bold">
-            Este desafio está publicado. Salvar cria a versão {desafio.versao + 1}; as respostas antigas continuam
-            ligadas à versão que a pessoa viu.
+            Este desafio está publicado. Salvar cria a versão {desafio.versao + 1}; as respostas antigas
+            continuam ligadas à versão que a pessoa viu.
           </p>
         )}
         <div className="grid grid-cols-2 gap-3">
@@ -126,7 +129,10 @@ export function EditorDeDesafio({
           </Campo>
         </div>
         <Campo rotulo="Enunciado">
-          <Entrada value={dados.enunciado} onChange={(evento) => atualizar({ enunciado: evento.target.value })} />
+          <Entrada
+            value={dados.enunciado}
+            onChange={(evento) => atualizar({ enunciado: evento.target.value })}
+          />
         </Campo>
 
         {dados.tipo === "MULTIPLA_ESCOLHA" && (
@@ -157,7 +163,10 @@ export function EditorDeDesafio({
         </Campo>
         <div className="grid grid-cols-[1fr_8rem] gap-3">
           <Campo rotulo="Dica (opcional)">
-            <Entrada value={dados.dica ?? ""} onChange={(evento) => atualizar({ dica: evento.target.value })} />
+            <Entrada
+              value={dados.dica ?? ""}
+              onChange={(evento) => atualizar({ dica: evento.target.value })}
+            />
           </Campo>
           <Campo rotulo="Pontos">
             <Entrada
@@ -237,7 +246,9 @@ function EditorDeMultiplaEscolha({
               type="button"
               aria-label={`Remover a alternativa ${alternativa.id.toUpperCase()}`}
               disabled={alternativas.length <= 2}
-              onClick={() => aoMudar({ alternativas: alternativas.filter((_, posicao) => posicao !== indice) })}
+              onClick={() =>
+                aoMudar({ alternativas: alternativas.filter((_, posicao) => posicao !== indice) })
+              }
               className="size-11 rounded-xl bg-white font-extrabold disabled:opacity-40"
             >
               ×
@@ -334,7 +345,8 @@ function SeletorDeLacunas({
     <fieldset className="flex flex-col gap-3 rounded-padrao border-2 border-neutro p-3">
       <legend className="px-1 font-extrabold">Frase e lacunas</legend>
       <p className="text-sm">
-        Escreva a frase completa, selecione com o mouse a palavra que vai faltar e toque em “Transformar em lacuna”.
+        Escreva a frase completa, selecione com o mouse a palavra que vai faltar e toque em “Transformar em
+        lacuna”.
       </p>
       <AreaDeTexto
         ref={campo}
@@ -413,7 +425,9 @@ function SeletorDeLacunas({
             ))}
             <Botao
               variante="discreto"
-              onClick={() => mudarBanco(lacuna.id, [...lacuna.banco, { palavra: "", correta: false, motivo: "" }])}
+              onClick={() =>
+                mudarBanco(lacuna.id, [...lacuna.banco, { palavra: "", correta: false, motivo: "" }])
+              }
             >
               Adicionar palavra errada
             </Botao>
@@ -430,9 +444,14 @@ function Previa({ dados }: { dados: DadosDoDesafio }) {
   const desafio = paraPublico(dados);
 
   return (
-    <section aria-label="Pré-visualização do desafio" className="flex flex-col gap-4 rounded-padrao bg-neutro/40 p-5">
+    <section
+      aria-label="Pré-visualização do desafio"
+      className="flex flex-col gap-4 rounded-padrao bg-neutro/40 p-5"
+    >
       <p className="text-sm font-extrabold tracking-widest">COMO O COLABORADOR VÊ (SEM GRAVAR PONTOS)</p>
-      <h2 className="text-[26px] leading-tight font-extrabold">{dados.enunciado || "Enunciado do desafio"}</h2>
+      <h2 className="text-[26px] leading-tight font-extrabold">
+        {dados.enunciado || "Enunciado do desafio"}
+      </h2>
       {dados.dica && <p className="rounded-padrao bg-aviso p-3 text-sm font-bold">Dica: {dados.dica}</p>}
       <ComponenteDoDesafio
         desafio={desafio}
@@ -451,7 +470,10 @@ function Previa({ dados }: { dados: DadosDoDesafio }) {
         Verificar
       </Botao>
       {verificado !== null && (
-        <p role="status" className={`rounded-padrao p-3 font-bold ${verificado ? "bg-acerto-suave" : "bg-erro-suave"}`}>
+        <p
+          role="status"
+          className={`rounded-padrao p-3 font-bold ${verificado ? "bg-acerto-suave" : "bg-erro-suave"}`}
+        >
           {verificado ? "Muito bem!" : "Quase!"} {dados.explicacao}
         </p>
       )}

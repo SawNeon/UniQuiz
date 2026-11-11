@@ -25,8 +25,9 @@ export function CompletarClicando({
   }
 
   function esvaziar(lacunaId: number) {
-    const restantes = { ...preenchidas };
-    delete restantes[String(lacunaId)];
+    const restantes = Object.fromEntries(
+      Object.entries(preenchidas).filter(([chave]) => chave !== String(lacunaId)),
+    );
     aoResponder({ lacunas: restantes });
     setSelecionada(lacunaId);
   }
@@ -48,7 +49,9 @@ export function CompletarClicando({
                     : "Lacuna vazia"
                 }
                 onClick={() =>
-                  preenchidas[String(trecho.lacunaId)] ? esvaziar(trecho.lacunaId) : setSelecionada(trecho.lacunaId)
+                  preenchidas[String(trecho.lacunaId)]
+                    ? esvaziar(trecho.lacunaId)
+                    : setSelecionada(trecho.lacunaId)
                 }
                 className={[
                   "mx-1 inline-flex min-h-10 min-w-24 items-center justify-center rounded-xl border-2 bg-white px-3 align-middle font-sans text-[17px] font-extrabold",

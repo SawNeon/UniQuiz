@@ -26,7 +26,10 @@ export function transformarEmLacuna(
   };
 }
 
-export function desfazerLacuna(conteudo: ConteudoCompletarClicandoAdmin, id: number): ConteudoCompletarClicandoAdmin {
+export function desfazerLacuna(
+  conteudo: ConteudoCompletarClicandoAdmin,
+  id: number,
+): ConteudoCompletarClicandoAdmin {
   const lacuna = conteudo.lacunas.find((existente) => existente.id === id);
   const palavraCerta = lacuna?.banco.find((opcao) => opcao.correta)?.palavra ?? "";
   return {

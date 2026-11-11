@@ -14,7 +14,9 @@ export function TelaDeValidacao() {
       {validacao.isError && (
         <section role="alert" className="flex items-start gap-3 rounded-padrao bg-erro-suave p-5">
           <Icone nome="errado" tamanho={28} />
-          <p className="font-bold">Não encontramos um certificado com o código {codigo}. Confira se foi digitado certo.</p>
+          <p className="font-bold">
+            Não encontramos um certificado com o código {codigo}. Confira se foi digitado certo.
+          </p>
         </section>
       )}
       {validacao.isSuccess && (
@@ -24,8 +26,8 @@ export function TelaDeValidacao() {
             Certificado válido
           </p>
           <p>
-            <strong>{validacao.data.nome}</strong> concluiu o módulo <strong>{validacao.data.modulo}</strong> do UniQuiz
-            em {new Date(`${validacao.data.emitidoEm}T12:00:00`).toLocaleDateString("pt-BR")}.
+            <strong>{validacao.data.nome}</strong> concluiu o módulo <strong>{validacao.data.modulo}</strong>{" "}
+            do UniQuiz em {new Date(`${validacao.data.emitidoEm}T12:00:00`).toLocaleDateString("pt-BR")}.
           </p>
           <p className="text-sm">Código {validacao.data.codigo}</p>
         </section>

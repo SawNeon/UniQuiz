@@ -5,7 +5,11 @@ const frase = "O registro deve ser feito pelo responsável do processo.";
 describe("transformarEmLacuna", () => {
   it("troca a palavra selecionada por um marcador e guarda a resposta certa", () => {
     const inicio = frase.indexOf("responsável");
-    const resultado = transformarEmLacuna({ texto: frase, lacunas: [] }, inicio, inicio + "responsável".length);
+    const resultado = transformarEmLacuna(
+      { texto: frase, lacunas: [] },
+      inicio,
+      inicio + "responsável".length,
+    );
 
     expect(resultado).toEqual({
       texto: "O registro deve ser feito pelo {{1}} do processo.",

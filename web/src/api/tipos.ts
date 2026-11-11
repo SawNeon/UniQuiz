@@ -98,7 +98,8 @@ export interface RespostaCompletarClicando {
   lacunas: Record<string, string>;
 }
 
-export type RespostaDoColaborador = RespostaMultiplaEscolha | RespostaVerdadeiroOuFalso | RespostaCompletarClicando;
+export type RespostaDoColaborador =
+  RespostaMultiplaEscolha | RespostaVerdadeiroOuFalso | RespostaCompletarClicando;
 
 export interface TentativaIniciada {
   tentativaId: number;
@@ -229,7 +230,10 @@ export type DesafioParaAdmin = {
 
 type OmitirEmCadaTipo<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
-export type DadosDoDesafio = OmitirEmCadaTipo<DesafioParaAdmin, "id" | "licaoId" | "versao" | "ordem" | "status">;
+export type DadosDoDesafio = OmitirEmCadaTipo<
+  DesafioParaAdmin,
+  "id" | "licaoId" | "versao" | "ordem" | "status"
+>;
 
 export interface ColaboradorParaAdmin {
   id: number;

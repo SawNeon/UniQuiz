@@ -3,12 +3,18 @@ import { type FormEvent, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
 import { api } from "../../api/cliente";
 import { chaves } from "../../api/consultas";
-import type { Correcao, RespostaDoColaborador, ResultadoDaLicao as Resultado, TentativaIniciada } from "../../api/tipos";
+import type {
+  Correcao,
+  RespostaDoColaborador,
+  ResultadoDaLicao as Resultado,
+  TentativaIniciada,
+} from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
 import { Icone } from "../../componentes/ui/Icone";
 import { alternarSom, tocar, useSomLigado } from "../../sons/sons";
-import { ComponenteDoDesafio, respostaCompleta } from "../desafios/ComponenteDoDesafio";
+import { ComponenteDoDesafio } from "../desafios/ComponenteDoDesafio";
+import { respostaCompleta } from "../desafios/respostaCompleta";
 import { desafioAtual, totalDePassos, useEstadoDaLicao } from "./estadoDaLicao";
 import { PainelDeCorrecao } from "./PainelDeCorrecao";
 import { ResultadoDaLicao } from "./ResultadoDaLicao";
@@ -129,7 +135,9 @@ export function TelaDaLicao() {
                 {estado.segundaRodada ? " · segunda chance" : ""}
               </span>
               <h1 className="text-[26px] leading-tight font-extrabold">{desafio.enunciado}</h1>
-              {desafio.dica && <p className="rounded-padrao bg-aviso p-3 text-sm font-bold">Dica: {desafio.dica}</p>}
+              {desafio.dica && (
+                <p className="rounded-padrao bg-aviso p-3 text-sm font-bold">Dica: {desafio.dica}</p>
+              )}
               {!estado.tentativa.valePontosIntegrais && (
                 <p className="rounded-padrao bg-info p-3 text-sm font-bold">
                   Você já fez esta lição. Agora é para treinar, com menos pontos.
@@ -149,12 +157,16 @@ export function TelaDaLicao() {
 
           <div className="sticky bottom-0 mt-auto" aria-live="polite">
             {estado.correcao && <PainelDeCorrecao correcao={estado.correcao} />}
-            <div className={`p-6 pt-0 ${estado.correcao ? (estado.correcao.correta ? "bg-acerto-suave" : "bg-erro-suave") : ""}`}>
+            <div
+              className={`p-6 pt-0 ${estado.correcao ? (estado.correcao.correta ? "bg-acerto-suave" : "bg-erro-suave") : ""}`}
+            >
               <Botao
                 type="submit"
                 larguraTotal
                 className="min-h-14"
-                disabled={!estado.correcao && (!respostaCompleta(desafio, estado.resposta) || verificar.isPending)}
+                disabled={
+                  !estado.correcao && (!respostaCompleta(desafio, estado.resposta) || verificar.isPending)
+                }
               >
                 {estado.correcao ? "Continuar" : "Verificar"}
               </Botao>

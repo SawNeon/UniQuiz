@@ -35,7 +35,10 @@ export function useMaterial(moduloId: number) {
 }
 
 export function useClassificacao() {
-  return useQuery({ queryKey: chaves.classificacao, queryFn: () => api.get<Classificacao>("/classificacao") });
+  return useQuery({
+    queryKey: chaves.classificacao,
+    queryFn: () => api.get<Classificacao>("/classificacao"),
+  });
 }
 
 export function useMaisRapidos(licaoId: number | null) {

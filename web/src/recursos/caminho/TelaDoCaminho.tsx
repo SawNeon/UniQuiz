@@ -60,7 +60,10 @@ function Modulo({ modulo, numero }: { modulo: ModuloNoCaminho; numero: number })
 
       <ol className="flex flex-col items-center gap-3">
         {modulo.licoes.map((licao, indice) => (
-          <li key={licao.id} className={`flex flex-col items-center ${DESLOCAMENTOS[indice % DESLOCAMENTOS.length]}`}>
+          <li
+            key={licao.id}
+            className={`flex flex-col items-center ${DESLOCAMENTOS[indice % DESLOCAMENTOS.length]}`}
+          >
             {indice > 0 && (
               <span
                 aria-hidden="true"

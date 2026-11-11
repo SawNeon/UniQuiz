@@ -7,10 +7,7 @@ import { MensagemDeErro } from "../../componentes/ui/Estados";
 import { Mascote } from "../../mascote/Mascote";
 
 function semAcento(texto: string): string {
-  return texto
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLocaleLowerCase("pt-BR");
+  return texto.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("pt-BR");
 }
 
 export function TelaDeEntrada() {
@@ -50,7 +47,10 @@ export function TelaDeEntrada() {
       </header>
 
       {escolhido ? (
-        <section aria-labelledby="titulo-confirmacao" className="flex flex-col gap-4 rounded-padrao bg-acerto-suave p-5">
+        <section
+          aria-labelledby="titulo-confirmacao"
+          className="flex flex-col gap-4 rounded-padrao bg-acerto-suave p-5"
+        >
           <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
             Você é {escolhido.nome}, do setor {nomeDoSetor}?
           </h2>
@@ -121,7 +121,10 @@ export function TelaDeEntrada() {
                 onChange={(evento) => setBusca(evento.target.value)}
                 className="min-h-12 rounded-padrao border-2 border-neutro px-3 text-lg"
               />
-              <ul aria-label="Colaboradores do setor" className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+              <ul
+                aria-label="Colaboradores do setor"
+                className="flex max-h-72 flex-col gap-2 overflow-y-auto"
+              >
                 {filtrados.map((pessoa) => (
                   <li key={pessoa.id}>
                     <button
@@ -140,7 +143,9 @@ export function TelaDeEntrada() {
             </div>
           )}
 
-          {empresas.isError && <MensagemDeErro erro={empresas.error} aoTentarDeNovo={() => void empresas.refetch()} />}
+          {empresas.isError && (
+            <MensagemDeErro erro={empresas.error} aoTentarDeNovo={() => void empresas.refetch()} />
+          )}
         </form>
       )}
 

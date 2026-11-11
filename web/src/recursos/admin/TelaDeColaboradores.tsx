@@ -27,8 +27,8 @@ function Importacao() {
       </h1>
       <p>
         Envie um arquivo .xlsx ou .csv com as colunas <strong>nome</strong>, <strong>setor</strong> e{" "}
-        <strong>empresa</strong>. Nada é gravado até você confirmar. Quem sair da planilha fica inativo, sem perder os
-        pontos.
+        <strong>empresa</strong>. Nada é gravado até você confirmar. Quem sair da planilha fica inativo, sem
+        perder os pontos.
       </p>
       <Campo rotulo="Planilha">
         <input
@@ -56,7 +56,9 @@ function Importacao() {
 
       {resumo && (
         <div className="flex flex-col gap-3 rounded-padrao bg-neutro/60 p-4" role="status">
-          <p className="font-extrabold">{confirmar.isSuccess ? "Importação concluída." : "Prévia da importação"}</p>
+          <p className="font-extrabold">
+            {confirmar.isSuccess ? "Importação concluída." : "Prévia da importação"}
+          </p>
           <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <li>Novos: {resumo.novos}</li>
             <li>Mantidos: {resumo.mantidos}</li>

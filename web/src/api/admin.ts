@@ -18,7 +18,10 @@ export const chavesAdmin = {
   temporadas: ["admin", "temporadas"] as const,
 };
 
-function useAcao<TEntrada, TSaida = void>(acao: (entrada: TEntrada) => Promise<TSaida>, invalidar: QueryKey[]) {
+function useAcao<TEntrada, TSaida = void>(
+  acao: (entrada: TEntrada) => Promise<TSaida>,
+  invalidar: QueryKey[],
+) {
   const cliente = useQueryClient();
   return useMutation({
     mutationFn: acao,
@@ -27,11 +30,18 @@ function useAcao<TEntrada, TSaida = void>(acao: (entrada: TEntrada) => Promise<T
 }
 
 export function useAdminEu() {
-  return useQuery({ queryKey: chavesAdmin.eu, queryFn: () => api.get<{ id: number }>("/admin/eu"), retry: false });
+  return useQuery({
+    queryKey: chavesAdmin.eu,
+    queryFn: () => api.get<{ id: number }>("/admin/eu"),
+    retry: false,
+  });
 }
 
 export function useLoginAdmin() {
-  return useAcao((dados: { usuario: string; senha: string }) => api.post("/admin/login", dados), [chavesAdmin.eu]);
+  return useAcao(
+    (dados: { usuario: string; senha: string }) => api.post("/admin/login", dados),
+    [chavesAdmin.eu],
+  );
 }
 
 export function useSairAdmin() {
@@ -43,7 +53,10 @@ export function useSairAdmin() {
 }
 
 export function useModulosAdmin() {
-  return useQuery({ queryKey: chavesAdmin.modulos, queryFn: () => api.get<ModuloParaAdmin[]>("/admin/modulos") });
+  return useQuery({
+    queryKey: chavesAdmin.modulos,
+    queryFn: () => api.get<ModuloParaAdmin[]>("/admin/modulos"),
+  });
 }
 
 export interface DadosDoModulo {
@@ -55,14 +68,17 @@ export interface DadosDoModulo {
 export function useSalvarModulo() {
   return useAcao(
     ({ id, ...dados }: DadosDoModulo & { id?: number }) =>
-      id ? api.put<ModuloParaAdmin>(`/admin/modulos/${id}`, dados) : api.post<ModuloParaAdmin>("/admin/modulos", dados),
+      id
+        ? api.put<ModuloParaAdmin>(`/admin/modulos/${id}`, dados)
+        : api.post<ModuloParaAdmin>("/admin/modulos", dados),
     [chavesAdmin.modulos],
   );
 }
 
 export function useStatus(recurso: "modulos" | "licoes" | "desafios", licaoId?: number) {
   return useAcao(
-    ({ id, status }: { id: number; status: StatusPublicacao }) => api.post(`/admin/${recurso}/${id}/status`, { status }),
+    ({ id, status }: { id: number; status: StatusPublicacao }) =>
+      api.post(`/admin/${recurso}/${id}/status`, { status }),
     licaoId ? [chavesAdmin.modulos, chavesAdmin.desafios(licaoId)] : [chavesAdmin.modulos],
   );
 }
@@ -81,7 +97,8 @@ export function useCriarLicao() {
 
 export function useRenomearLicao() {
   return useAcao(
-    ({ licaoId, titulo }: { licaoId: number; titulo: string }) => api.put(`/admin/licoes/${licaoId}`, { titulo }),
+    ({ licaoId, titulo }: { licaoId: number; titulo: string }) =>
+      api.put(`/admin/licoes/${licaoId}`, { titulo }),
     [chavesAdmin.modulos],
   );
 }
@@ -115,11 +132,14 @@ export function useColaboradoresAdmin(busca: string) {
 }
 
 export function useImportacao(etapa: "previa" | "confirmar") {
-  return useAcao((arquivo: File) => {
-    const formulario = new FormData();
-    formulario.append("arquivo", arquivo);
-    return api.post<ResumoDaImportacao>(`/admin/colaboradores/importacao/${etapa}`, formulario);
-  }, etapa === "confirmar" ? [["admin", "colaboradores"]] : []);
+  return useAcao(
+    (arquivo: File) => {
+      const formulario = new FormData();
+      formulario.append("arquivo", arquivo);
+      return api.post<ResumoDaImportacao>(`/admin/colaboradores/importacao/${etapa}`, formulario);
+    },
+    etapa === "confirmar" ? [["admin", "colaboradores"]] : [],
+  );
 }
 
 export function useAjustarColaborador() {
@@ -135,13 +155,18 @@ export function useZerarPontos() {
 }
 
 export function useTemporadasAdmin() {
-  return useQuery({ queryKey: chavesAdmin.temporadas, queryFn: () => api.get<Temporada[]>("/admin/temporadas") });
+  return useQuery({
+    queryKey: chavesAdmin.temporadas,
+    queryFn: () => api.get<Temporada[]>("/admin/temporadas"),
+  });
 }
 
 export function useSalvarTemporada() {
   return useAcao(
     ({ id, ...dados }: Omit<Temporada, "id"> & { id?: number }) =>
-      id ? api.put<Temporada>(`/admin/temporadas/${id}`, dados) : api.post<Temporada>("/admin/temporadas", dados),
+      id
+        ? api.put<Temporada>(`/admin/temporadas/${id}`, dados)
+        : api.post<Temporada>("/admin/temporadas", dados),
     [chavesAdmin.temporadas],
   );
 }

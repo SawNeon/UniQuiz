@@ -13,7 +13,13 @@ const estilos: Record<Variante, string> = {
   discreto: "bg-transparent text-texto underline-offset-4 hover:underline disabled:opacity-60",
 };
 
-export function Botao({ variante = "principal", larguraTotal = false, className = "", type = "button", ...resto }: PropsBotao) {
+export function Botao({
+  variante = "principal",
+  larguraTotal = false,
+  className = "",
+  type = "button",
+  ...resto
+}: PropsBotao) {
   return (
     <button
       type={type}

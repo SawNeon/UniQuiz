@@ -14,7 +14,13 @@ const esquema = z.object({
   materialEstudo: z.string().max(20_000, "O material passou do limite de 20 mil caracteres."),
 });
 
-export function FormularioDeModulo({ modulo, aoTerminar }: { modulo?: ModuloParaAdmin; aoTerminar: () => void }) {
+export function FormularioDeModulo({
+  modulo,
+  aoTerminar,
+}: {
+  modulo?: ModuloParaAdmin;
+  aoTerminar: () => void;
+}) {
   const salvar = useSalvarModulo();
   const {
     register,
@@ -34,7 +40,9 @@ export function FormularioDeModulo({ modulo, aoTerminar }: { modulo?: ModuloPara
   return (
     <form
       className="flex flex-col gap-4 rounded-padrao border-2 border-neutro p-4"
-      onSubmit={handleSubmit((dados) => salvar.mutate({ id: modulo?.id, ...dados }, { onSuccess: aoTerminar }))}
+      onSubmit={handleSubmit((dados) =>
+        salvar.mutate({ id: modulo?.id, ...dados }, { onSuccess: aoTerminar }),
+      )}
     >
       <Campo rotulo="Título" erro={errors.titulo?.message}>
         <Entrada {...register("titulo")} />
