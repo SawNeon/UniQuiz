@@ -114,8 +114,7 @@ public record ConteudoCompletarClicando(String texto, List<Lacuna> lacunas) impl
     }
 
     private String textoCompleto() {
-        Map<Integer, String> corretas =
-                lacunas.stream().collect(Collectors.toMap(Lacuna::id, Lacuna::palavraCorreta));
+        Map<Integer, String> corretas = lacunas.stream().collect(Collectors.toMap(Lacuna::id, Lacuna::palavraCorreta));
         return MARCADOR.matcher(texto)
                 .replaceAll(marcador -> Matcher.quoteReplacement(
                         corretas.getOrDefault(Integer.parseInt(marcador.group(1)), marcador.group())));

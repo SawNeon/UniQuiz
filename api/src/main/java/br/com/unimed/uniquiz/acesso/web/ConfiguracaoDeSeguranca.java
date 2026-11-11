@@ -34,9 +34,13 @@ class ConfiguracaoDeSeguranca {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(erros -> erros.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .exceptionHandling(
+                        erros -> erros.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(rotas -> rotas.requestMatchers(
-                                HttpMethod.GET, "/api/empresas", "/api/empresas/*/setores", "/api/setores/*/colaboradores")
+                                HttpMethod.GET,
+                                "/api/empresas",
+                                "/api/empresas/*/setores",
+                                "/api/setores/*/colaboradores")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/sessao", "/api/admin/login")
                         .permitAll()

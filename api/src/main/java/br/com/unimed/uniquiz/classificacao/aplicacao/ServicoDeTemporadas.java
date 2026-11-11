@@ -53,14 +53,17 @@ public class ServicoDeTemporadas {
 
     @Transactional(readOnly = true)
     public TemporadaVista buscar(Long temporadaId) {
-        return temporadas.findById(temporadaId)
+        return temporadas
+                .findById(temporadaId)
                 .map(TemporadaVista::de)
                 .orElseThrow(() -> new RecursoNaoEncontrado("Temporada não encontrada."));
     }
 
     @Transactional(readOnly = true)
     public List<TemporadaVista> listar() {
-        return temporadas.findAllByOrderByInicioDesc().stream().map(TemporadaVista::de).toList();
+        return temporadas.findAllByOrderByInicioDesc().stream()
+                .map(TemporadaVista::de)
+                .toList();
     }
 
     @Transactional
@@ -73,7 +76,8 @@ public class ServicoDeTemporadas {
 
     @Transactional
     public TemporadaVista atualizar(Long temporadaId, DadosDaTemporada dados) {
-        Temporada temporada = temporadas.findById(temporadaId)
+        Temporada temporada = temporadas
+                .findById(temporadaId)
                 .orElseThrow(() -> new RecursoNaoEncontrado("Temporada não encontrada."));
         exigirSemSobreposicao(temporadaId, dados);
         temporada.atualizar(dados.nome(), dados.inicio(), dados.fim(), dados.premioTexto());

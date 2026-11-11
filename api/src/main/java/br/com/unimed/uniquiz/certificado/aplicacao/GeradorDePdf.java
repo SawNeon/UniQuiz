@@ -55,7 +55,8 @@ class GeradorDePdf {
                 centralizado(tela, negrito, 34, VERDE_ESCURO, largura, altura - 150, "Certificado de conclusão");
                 centralizado(tela, normal, 16, VERDE_ESCURO, largura, altura - 200, "Certificamos que");
                 centralizado(tela, negrito, 30, VERDE_UNIMED, largura, altura - 245, ajustar(dados.nome(), 60));
-                centralizado(tela, normal, 16, VERDE_ESCURO, largura, altura - 290, "concluiu todas as lições do módulo");
+                centralizado(
+                        tela, normal, 16, VERDE_ESCURO, largura, altura - 290, "concluiu todas as lições do módulo");
                 centralizado(tela, negrito, 24, VERDE_ESCURO, largura, altura - 330, ajustar(dados.modulo(), 70));
                 centralizado(
                         tela,
@@ -66,7 +67,13 @@ class GeradorDePdf {
                         altura - 370,
                         "no UniQuiz, programa de aprendizagem da equipe de TI.");
                 centralizado(
-                        tela, normal, 14, VERDE_ESCURO, largura, altura - 410, DATA_POR_EXTENSO.format(dados.emitidoEm()));
+                        tela,
+                        normal,
+                        14,
+                        VERDE_ESCURO,
+                        largura,
+                        altura - 410,
+                        DATA_POR_EXTENSO.format(dados.emitidoEm()));
 
                 texto(
                         tela,
@@ -93,7 +100,13 @@ class GeradorDePdf {
     }
 
     private static void centralizado(
-            PDPageContentStream tela, PDFont fonte, float tamanho, Color cor, float larguraDaPagina, float y, String valor)
+            PDPageContentStream tela,
+            PDFont fonte,
+            float tamanho,
+            Color cor,
+            float larguraDaPagina,
+            float y,
+            String valor)
             throws IOException {
         float larguraDoTexto = fonte.getStringWidth(valor) / 1000 * tamanho;
         texto(tela, fonte, tamanho, cor, (larguraDaPagina - larguraDoTexto) / 2, y, valor);

@@ -28,9 +28,7 @@ class FiltroDeSessao extends OncePerRequestFilter {
         boolean areaAdmin = requisicao.getRequestURI().startsWith("/api/admin/");
         String cookie = areaAdmin ? CookiesDeSessao.ADMINISTRADOR : CookiesDeSessao.COLABORADOR;
 
-        CookiesDeSessao.ler(requisicao, cookie)
-                .flatMap(sessoes::buscar)
-                .ifPresent(FiltroDeSessao::autenticar);
+        CookiesDeSessao.ler(requisicao, cookie).flatMap(sessoes::buscar).ifPresent(FiltroDeSessao::autenticar);
 
         cadeia.doFilter(requisicao, resposta);
     }

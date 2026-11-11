@@ -35,9 +35,7 @@ public class ServicoDeProgresso {
     private final SequenciaDiariaRepository sequencias;
 
     public ServicoDeProgresso(
-            ServicoDeConteudoPublicado conteudo,
-            TentativaRepository tentativas,
-            SequenciaDiariaRepository sequencias) {
+            ServicoDeConteudoPublicado conteudo, TentativaRepository tentativas, SequenciaDiariaRepository sequencias) {
         this.conteudo = conteudo;
         this.tentativas = tentativas;
         this.sequencias = sequencias;
@@ -80,8 +78,7 @@ public class ServicoDeProgresso {
 
     @Transactional(readOnly = true)
     public boolean moduloConcluido(Long colaboradorId, Long moduloId) {
-        return caminho(colaboradorId).stream()
-                .anyMatch(modulo -> modulo.id().equals(moduloId) && modulo.concluido());
+        return caminho(colaboradorId).stream().anyMatch(modulo -> modulo.id().equals(moduloId) && modulo.concluido());
     }
 
     @Transactional(readOnly = true)

@@ -74,7 +74,8 @@ class CorrecaoDeDesafiosTest {
 
         @Test
         void corrigeOsDoisLados() {
-            assertThat(desafio.corrigir(new RespostaDoColaborador.VerdadeiroOuFalso(true)).correta())
+            assertThat(desafio.corrigir(new RespostaDoColaborador.VerdadeiroOuFalso(true))
+                            .correta())
                     .isTrue();
             Correcao erro = desafio.corrigir(new RespostaDoColaborador.VerdadeiroOuFalso(false));
             assertThat(erro.correta()).isFalse();
@@ -117,8 +118,8 @@ class CorrecaoDeDesafiosTest {
 
         @Test
         void validaQueCadaMarcadorTemBanco() {
-            ConteudoCompletarClicando semBanco = new ConteudoCompletarClicando(
-                    "Frase com {{1}} e {{2}}.", desafio.lacunas());
+            ConteudoCompletarClicando semBanco =
+                    new ConteudoCompletarClicando("Frase com {{1}} e {{2}}.", desafio.lacunas());
 
             assertThatThrownBy(semBanco::validar).isInstanceOf(ErroDeNegocio.class);
         }

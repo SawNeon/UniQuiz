@@ -9,7 +9,8 @@ public enum TipoDesafio {
     private final Class<? extends RespostaDoColaborador> classeDaResposta;
 
     TipoDesafio(
-            Class<? extends ConteudoDesafio> classeDoConteudo, Class<? extends RespostaDoColaborador> classeDaResposta) {
+            Class<? extends ConteudoDesafio> classeDoConteudo,
+            Class<? extends RespostaDoColaborador> classeDaResposta) {
         this.classeDoConteudo = classeDoConteudo;
         this.classeDaResposta = classeDaResposta;
     }

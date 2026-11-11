@@ -25,7 +25,9 @@ public record ConteudoMultiplaEscolha(List<Alternativa> alternativas) implements
                 alternativas.stream().map(Alternativa::id).distinct().count() == alternativas.size(),
                 "Cada alternativa precisa de um identificador diferente.");
         for (Alternativa alternativa : alternativas) {
-            exigir(preenchido(alternativa.id()) && preenchido(alternativa.texto()), "Preencha o texto de cada alternativa.");
+            exigir(
+                    preenchido(alternativa.id()) && preenchido(alternativa.texto()),
+                    "Preencha o texto de cada alternativa.");
             exigir(
                     alternativa.correta() || preenchido(alternativa.motivo()),
                     "Explique por que a alternativa \"%s\" está errada.".formatted(alternativa.texto()));
@@ -51,8 +53,6 @@ public record ConteudoMultiplaEscolha(List<Alternativa> alternativas) implements
                 .map(Alternativa::texto)
                 .findFirst()
                 .orElseThrow();
-        return escolhida.correta()
-                ? Correcao.acerto(respostaCerta)
-                : Correcao.erro(escolhida.motivo(), respostaCerta);
+        return escolhida.correta() ? Correcao.acerto(respostaCerta) : Correcao.erro(escolhida.motivo(), respostaCerta);
     }
 }

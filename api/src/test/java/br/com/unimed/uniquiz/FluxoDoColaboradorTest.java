@@ -65,7 +65,8 @@ class FluxoDoColaboradorTest {
         long licaoId = caminho.get(0).get("licoes").get(0).get("id").asLong();
         assertThat(caminho.get(0).get("licoes").get(0).get("situacao").asText()).isEqualTo("DISPONIVEL");
 
-        String tentativaBruta = mvc.perform(post("/api/licoes/{id}/tentativas", licaoId).cookie(sessao))
+        String tentativaBruta = mvc.perform(
+                        post("/api/licoes/{id}/tentativas", licaoId).cookie(sessao))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -78,8 +79,8 @@ class FluxoDoColaboradorTest {
             mvc.perform(post("/api/tentativas/{id}/respostas", tentativaId)
                             .cookie(sessao)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content(json.writeValueAsString(new EnvioDeTeste(
-                                    desafio.get("id").asLong(), qualquerResposta(desafio)))))
+                            .content(json.writeValueAsString(
+                                    new EnvioDeTeste(desafio.get("id").asLong(), qualquerResposta(desafio)))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.respostaCerta").exists());
         }
@@ -115,8 +116,7 @@ class FluxoDoColaboradorTest {
 
         mvc.perform(post("/api/modulos/{id}/certificado", moduloId).cookie(sessao))
                 .andExpect(status().isUnprocessableEntity());
-        mvc.perform(get("/api/publico/certificados/{codigo}", "AAAA-BBBB-CCCC"))
-                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/publico/certificados/{codigo}", "AAAA-BBBB-CCCC")).andExpect(status().isNotFound());
     }
 
     record EnvioDeTeste(long desafioId, Object resposta) {}
@@ -126,7 +126,8 @@ class FluxoDoColaboradorTest {
         return switch (desafio.get("tipo").asText()) {
             case "MULTIPLA_ESCOLHA" ->
                 Map.of(
-                        "alternativaId", conteudo.get("alternativas").get(0).get("id").asText());
+                        "alternativaId",
+                        conteudo.get("alternativas").get(0).get("id").asText());
             case "VERDADEIRO_OU_FALSO" -> Map.of("valor", true);
             case "COMPLETAR_CLICANDO" -> {
                 Map<String, String> lacunas = new HashMap<>();
@@ -145,15 +146,17 @@ class FluxoDoColaboradorTest {
     }
 
     private Cookie entrarComoColaborador(String nome) throws Exception {
-        long empresaId = lerJson(mvc.perform(get("/api/empresas"))).get(0).get("id").asLong();
+        long empresaId =
+                lerJson(mvc.perform(get("/api/empresas"))).get(0).get("id").asLong();
         JsonNode setores = lerJson(mvc.perform(get("/api/empresas/{id}/setores", empresaId)));
         for (JsonNode setor : setores) {
-            for (JsonNode colaborador :
-                    lerJson(mvc.perform(get("/api/setores/{id}/colaboradores", setor.get("id").asLong())))) {
+            for (JsonNode colaborador : lerJson(mvc.perform(
+                    get("/api/setores/{id}/colaboradores", setor.get("id").asLong())))) {
                 if (colaborador.get("nome").asText().equals(nome)) {
                     return mvc.perform(post("/api/sessao")
                                     .contentType(MediaType.APPLICATION_JSON)
-                                    .content("{\"colaboradorId\":" + colaborador.get("id").asLong() + "}"))
+                                    .content("{\"colaboradorId\":"
+                                            + colaborador.get("id").asLong() + "}"))
                             .andExpect(status().isNoContent())
                             .andReturn()
                             .getResponse()
@@ -165,6 +168,7 @@ class FluxoDoColaboradorTest {
     }
 
     private JsonNode lerJson(ResultActions acao) throws Exception {
-        return json.readTree(acao.andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        return json.readTree(
+                acao.andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
     }
 }

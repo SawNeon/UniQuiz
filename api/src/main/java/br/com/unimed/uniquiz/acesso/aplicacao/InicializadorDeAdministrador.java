@@ -37,8 +37,10 @@ class InicializadorDeAdministrador implements ApplicationRunner {
         String usuario = adminInicial.usuario();
         String senha = adminInicial.senha();
         if (usuario == null || usuario.isBlank() || senha == null || senha.length() < TAMANHO_MINIMO_DA_SENHA) {
-            log.warn("Nenhum administrador cadastrado. Defina UNIQUIZ_ADMIN_USUARIO e UNIQUIZ_ADMIN_SENHA "
-                    + "(mínimo de {} caracteres) para criar o primeiro.", TAMANHO_MINIMO_DA_SENHA);
+            log.warn(
+                    "Nenhum administrador cadastrado. Defina UNIQUIZ_ADMIN_USUARIO e UNIQUIZ_ADMIN_SENHA "
+                            + "(mínimo de {} caracteres) para criar o primeiro.",
+                    TAMANHO_MINIMO_DA_SENHA);
             return;
         }
         administradores.save(new Administrador(usuario.strip(), codificador.encode(senha)));

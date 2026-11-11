@@ -85,7 +85,9 @@ public class Desafio {
         this.dificuldade = dados.dificuldade();
         this.pontos = dados.pontos();
         this.explicacao = dados.explicacao().strip();
-        this.dica = dados.dica() == null || dados.dica().isBlank() ? null : dados.dica().strip();
+        this.dica = dados.dica() == null || dados.dica().isBlank()
+                ? null
+                : dados.dica().strip();
         this.conteudoJson = dados.conteudoJson();
     }
 

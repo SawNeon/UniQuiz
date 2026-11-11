@@ -189,7 +189,8 @@ public class ServicoDeLicao {
         Tentativa tentativa = tentativaDoColaborador(colaboradorId, tentativaId);
         tentativa.exigirEmAndamento();
         List<Resposta> lista = respostas.findByTentativaIdOrderByIdAsc(tentativaId);
-        List<Resposta> primeiras = lista.stream().filter(Resposta::primeiraResposta).toList();
+        List<Resposta> primeiras =
+                lista.stream().filter(Resposta::primeiraResposta).toList();
         if (primeiras.size() < tentativa.getTotal()) {
             throw new ErroDeNegocio("Responda todos os desafios antes de concluir a lição.");
         }
@@ -232,7 +233,10 @@ public class ServicoDeLicao {
                 ganhos.stream().mapToInt(Ganho::pontos).sum(),
                 sequencia.diasAtuais(),
                 novos,
-                moduloConcluido ? new ModuloConcluido(moduloId, conteudo.modulo(moduloId).titulo()) : null);
+                moduloConcluido
+                        ? new ModuloConcluido(
+                                moduloId, conteudo.modulo(moduloId).titulo())
+                        : null);
     }
 
     private Tentativa tentativaDoColaborador(Long colaboradorId, Long tentativaId) {
@@ -250,9 +254,11 @@ public class ServicoDeLicao {
         if (primeira == null) {
             return false;
         }
-        boolean todasRespondidas = anteriores.stream().filter(Resposta::primeiraResposta).count() == tentativa.getTotal();
+        boolean todasRespondidas =
+                anteriores.stream().filter(Resposta::primeiraResposta).count() == tentativa.getTotal();
         boolean jaUsouSegundaChance = anteriores.stream()
-                .anyMatch(resposta -> resposta.isSegundaChance() && resposta.getDesafioId().equals(desafioId));
+                .anyMatch(resposta ->
+                        resposta.isSegundaChance() && resposta.getDesafioId().equals(desafioId));
         if (primeira.isCorreta() || !todasRespondidas || jaUsouSegundaChance) {
             throw new ErroDeNegocio("Esse desafio já foi respondido.");
         }
@@ -263,14 +269,17 @@ public class ServicoDeLicao {
         List<Resposta> primeiras =
                 anteriores.stream().filter(Resposta::primeiraResposta).toList();
         int seguidos = 0;
-        for (int indice = primeiras.size() - 1; indice >= 0 && primeiras.get(indice).isCorreta(); indice--) {
+        for (int indice = primeiras.size() - 1;
+                indice >= 0 && primeiras.get(indice).isCorreta();
+                indice--) {
             seguidos++;
         }
         return seguidos;
     }
 
     private static List<Long> pendentesDeSegundaChance(Tentativa tentativa, List<Resposta> todas) {
-        List<Resposta> primeiras = todas.stream().filter(Resposta::primeiraResposta).toList();
+        List<Resposta> primeiras =
+                todas.stream().filter(Resposta::primeiraResposta).toList();
         if (primeiras.size() < tentativa.getTotal()) {
             return List.of();
         }

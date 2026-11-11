@@ -66,7 +66,8 @@ public class ServicoDePerfil {
     public Perfil doColaborador(Long colaboradorId) {
         Identificacao identificacao = colaboradores.identificar(colaboradorId);
         int total = pontos.total(colaboradorId);
-        int naTemporada = temporadas.ativa()
+        int naTemporada = temporadas
+                .ativa()
                 .map(temporada -> pontos.naTemporada(colaboradorId, temporada.id()))
                 .orElse(0);
         int nivel = regras.nivel(total);

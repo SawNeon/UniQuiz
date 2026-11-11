@@ -45,7 +45,8 @@ public class ServicoDePontos {
 
     @Transactional
     public void zerarNaTemporadaAtiva(Long colaboradorId) {
-        Long temporadaId = temporadas.ativa()
+        Long temporadaId = temporadas
+                .ativa()
                 .map(ServicoDeTemporadas.TemporadaVista::id)
                 .orElseThrow(() -> new ErroDeNegocio("Não há temporada ativa para zerar os pontos."));
         int pontos = eventos.totalNaTemporada(colaboradorId, temporadaId);

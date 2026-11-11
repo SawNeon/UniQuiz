@@ -49,8 +49,8 @@ public class ServicoDeSessao {
         }
         String token = Tokens.novo();
         Instant agora = relogio.instant();
-        sessoes.save(Sessao.deColaborador(
-                Tokens.hash(token), colaboradorId, agora, agora.plus(duracaoSessaoColaborador)));
+        sessoes.save(
+                Sessao.deColaborador(Tokens.hash(token), colaboradorId, agora, agora.plus(duracaoSessaoColaborador)));
         return token;
     }
 
@@ -58,7 +58,8 @@ public class ServicoDeSessao {
     public String entrarComoAdministrador(Long administradorId) {
         String token = Tokens.novo();
         Instant agora = relogio.instant();
-        sessoes.save(Sessao.deAdministrador(Tokens.hash(token), administradorId, agora, agora.plus(DURACAO_SESSAO_ADMIN)));
+        sessoes.save(
+                Sessao.deAdministrador(Tokens.hash(token), administradorId, agora, agora.plus(DURACAO_SESSAO_ADMIN)));
         return token;
     }
 
@@ -66,7 +67,8 @@ public class ServicoDeSessao {
     public Optional<UsuarioLogado> buscar(String token) {
         return sessoes.findById(Tokens.hash(token))
                 .filter(sessao -> !sessao.expirada(relogio.instant()))
-                .filter(sessao -> sessao.getColaboradorId() == null || colaboradores.estaAtivo(sessao.getColaboradorId()))
+                .filter(sessao ->
+                        sessao.getColaboradorId() == null || colaboradores.estaAtivo(sessao.getColaboradorId()))
                 .map(sessao -> sessao.getColaboradorId() != null
                         ? new UsuarioLogado(UsuarioLogado.Perfil.COLABORADOR, sessao.getColaboradorId())
                         : new UsuarioLogado(UsuarioLogado.Perfil.ADMINISTRADOR, sessao.getAdministradorId()));

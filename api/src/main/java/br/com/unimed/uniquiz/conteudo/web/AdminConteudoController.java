@@ -100,8 +100,7 @@ class AdminConteudoController {
     }
 
     @PutMapping("/desafios/{desafioId}")
-    ConteudoParaAdmin.Desafio atualizarDesafio(
-            @PathVariable Long desafioId, @Valid @RequestBody DadosDoDesafio dados) {
+    ConteudoParaAdmin.Desafio atualizarDesafio(@PathVariable Long desafioId, @Valid @RequestBody DadosDoDesafio dados) {
         return conteudo.atualizarDesafio(desafioId, dados);
     }
 

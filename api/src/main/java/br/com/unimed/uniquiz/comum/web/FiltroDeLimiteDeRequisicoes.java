@@ -28,8 +28,8 @@ public class FiltroDeLimiteDeRequisicoes extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest requisicao, HttpServletResponse resposta, FilterChain cadeia)
             throws ServletException, IOException {
-        boolean loginAdmin = "POST".equals(requisicao.getMethod())
-                && "/api/admin/login".equals(requisicao.getRequestURI());
+        boolean loginAdmin =
+                "POST".equals(requisicao.getMethod()) && "/api/admin/login".equals(requisicao.getRequestURI());
         int porMinuto = loginAdmin ? limites.loginAdminPorMinuto() : limites.geralPorMinuto();
         String chave = (loginAdmin ? "login:" : "geral:") + requisicao.getRemoteAddr();
 

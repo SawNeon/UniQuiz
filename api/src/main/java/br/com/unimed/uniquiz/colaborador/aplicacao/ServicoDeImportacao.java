@@ -57,7 +57,8 @@ public class ServicoDeImportacao {
         Map<String, Empresa> empresasPorNome = empresas.findAll().stream()
                 .collect(Collectors.toMap(empresa -> Textos.normalizar(empresa.getNome()), Function.identity()));
         Map<String, Setor> setoresPorNome = new HashMap<>();
-        setores.findAll().forEach(setor -> setoresPorNome.put(chaveDoSetor(setor.getEmpresaId(), setor.getNome()), setor));
+        setores.findAll()
+                .forEach(setor -> setoresPorNome.put(chaveDoSetor(setor.getEmpresaId(), setor.getNome()), setor));
 
         for (LinhaDaPlanilha novo : plano.novos()) {
             Empresa empresa = empresasPorNome.computeIfAbsent(

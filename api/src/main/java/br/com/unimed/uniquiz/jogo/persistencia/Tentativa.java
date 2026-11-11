@@ -35,12 +35,7 @@ public class Tentativa {
     protected Tentativa() {}
 
     public Tentativa(
-            Long colaboradorId,
-            Long licaoId,
-            Long temporadaId,
-            Instant iniciadaEm,
-            int total,
-            int percentualPontos) {
+            Long colaboradorId, Long licaoId, Long temporadaId, Instant iniciadaEm, int total, int percentualPontos) {
         this.colaboradorId = colaboradorId;
         this.licaoId = licaoId;
         this.temporadaId = temporadaId;

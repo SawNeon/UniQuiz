@@ -36,7 +36,8 @@ public class ServicoDeLoginAdmin {
     @Transactional(noRollbackFor = ErroDeNegocio.class)
     public String entrar(String usuario, String senha) {
         Instant agora = relogio.instant();
-        Optional<Administrador> encontrado = administradores.findByUsuario(usuario).filter(Administrador::isAtivo);
+        Optional<Administrador> encontrado =
+                administradores.findByUsuario(usuario).filter(Administrador::isAtivo);
         if (encontrado.isEmpty()) {
             codificador.matches(senha, hashDeReferencia);
             throw new ErroDeNegocio(CREDENCIAIS_INVALIDAS);
