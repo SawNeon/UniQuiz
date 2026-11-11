@@ -23,7 +23,7 @@
         <poi.version>5.4.1</poi.version>
         <commons-csv.version>1.14.1</commons-csv.version>
         <pdfbox.version>3.0.5</pdfbox.version>
-        <bucket4j.version>8.14.0</bucket4j.version>
+        <bucket4j.version>8.22.0</bucket4j.version>
         <archunit.version>1.4.1</archunit.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <spotless.version>2.46.1</spotless.version>
