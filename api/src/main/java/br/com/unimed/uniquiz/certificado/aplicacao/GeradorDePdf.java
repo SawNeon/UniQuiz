@@ -108,7 +108,7 @@ class GeradorDePdf {
             float y,
             String valor)
             throws IOException {
-        float larguraDoTexto = fonte.getStringWidth(valor) / 1000 * tamanho;
+        float larguraDoTexto = fonte.getStringWidth(semCaracteresForaDaFonte(valor)) / 1000 * tamanho;
         texto(tela, fonte, tamanho, cor, (larguraDaPagina - larguraDoTexto) / 2, y, valor);
     }
 
