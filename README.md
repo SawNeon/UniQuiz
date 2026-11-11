@@ -51,9 +51,12 @@ O npm 11 bloqueia scripts de instalação por padrão. O do `esbuild` não é ne
 
 | Onde | Comando | O que cobre |
 | --- | --- | --- |
-| API | `./mvnw verify` | Correção de cada tipo de desafio, pontuação, sequência de dias, importação, regras de arquitetura (ArchUnit) e o fluxo completo com SQL Server em Testcontainers (precisa de Docker) |
-| Web | `npm run testar` | Componentes de desafio, estado da lição e o seletor de lacunas |
-| Ponta a ponta | `npm run testar:e2e` | Entrar, fazer uma lição e ver a classificação. Precisa da API rodando em `dev` |
+| API, domínio | `./mvnw test` | Correção de cada tipo de desafio, pontuação, sequência de dias, troféus, importação, PDF do certificado, limite de requisições e regras de arquitetura (ArchUnit). Roda sem banco |
+| API, integração | `./mvnw verify` | Sobe um SQL Server real com Testcontainers e testa pela API: segurança e sessões, lição completa com segunda chance e pontos, certificado, classificação, conteúdo do admin e importação. Precisa de Docker; sem Docker esses testes são pulados |
+| Web | `npm run cobertura` | Todas as telas do colaborador e do admin com a API simulada, mais componentes e funções. Falha se a cobertura cair abaixo de 90% das linhas ou 85% dos ramos |
+| Ponta a ponta | `npm run testar:e2e` | No navegador de verdade (celular e computador): entrar, fazer uma lição e ver a classificação. Precisa do banco e da API rodando em `dev` |
+
+Os testes de integração compartilham um único SQL Server e voltam ao conteúdo de exemplo antes de cada teste, então podem rodar em qualquer ordem.
 
 ## Variáveis de ambiente da API
 

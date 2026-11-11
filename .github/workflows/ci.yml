@@ -28,7 +28,7 @@ jobs:
       - name: Formatação
         run: ./mvnw -B spotless:check
       - name: Testes, incluindo SQL Server com Testcontainers
-        run: ./mvnw -B verify
+        run: ./mvnw -B verify -Pcobertura
       - name: Relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,8 +53,14 @@ jobs:
         run: npm run verificar-formato
       - name: Lint
         run: npm run lint
-      - name: Testes
-        run: npm run testar
+      - name: Testes com cobertura mínima
+        run: npm run cobertura
+      - name: Relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-web
+          path: web/coverage
       - name: Build
         run: npm run build
 
