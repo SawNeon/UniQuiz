@@ -63,7 +63,7 @@ public class LeitorDePlanilha {
                 .setDelimiter(detectarDelimitador(texto))
                 .setIgnoreEmptyLines(true)
                 .setTrim(true)
-                .get();
+                .build();
         try (CSVParser leitor = CSVParser.parse(texto, formato)) {
             List<LinhaBruta> linhas = new ArrayList<>();
             for (CSVRecord registro : leitor) {
