@@ -97,11 +97,17 @@ export function BotoesDeOrdem<T extends { id: number }>({
 
 export function Campo({ rotulo, erro, children }: { rotulo: string; erro?: string; children: ReactNode }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="font-extrabold">{rotulo}</span>
-      {children}
-      {erro && <span className="text-sm font-bold">{erro}</span>}
-    </label>
+    <div className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5">
+        <span className="font-extrabold">{rotulo}</span>
+        {children}
+      </label>
+      {erro && (
+        <span role="alert" className="text-sm font-bold">
+          {erro}
+        </span>
+      )}
+    </div>
   );
 }
 
