@@ -38,5 +38,18 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/testes/configuracao.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/testes/**",
+        "src/main.tsx",
+        "src/api/tipos.ts",
+        "src/api/esquema.d.ts",
+      ],
+      reporter: ["text-summary", "text", "html"],
+      thresholds: { statements: 90, branches: 85, functions: 85, lines: 90 },
+    },
   },
 });
