@@ -1,0 +1,32 @@
+services:
+  banco:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${UNIQUIZ_DB_SENHA:?defina UNIQUIZ_DB_SENHA no arquivo .env}
+    ports:
+      - "1433:1433"
+    volumes:
+      - dados-do-banco:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  criar-banco:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      banco:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${UNIQUIZ_DB_SENHA}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /opt/mssql-tools18/bin/sqlcmd -S banco -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "IF DB_ID('uniquiz') IS NULL CREATE DATABASE uniquiz"
+    restart: "no"
+
+volumes:
+  dados-do-banco:
