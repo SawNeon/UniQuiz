@@ -1,0 +1,42 @@
+@import "@fontsource/nunito/400.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
+@import "@fontsource/roboto-slab/400.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "tailwindcss";
+
+@theme {
+  --color-primaria: #00995d;
+  --color-texto: #004e4c;
+  --color-energia: #f47920;
+  --color-conquista: #b1d34b;
+  --color-neutro: #ece3d9;
+  --color-aviso: #ffe596;
+  --color-erro-suave: #f1cdcd;
+  --color-info: #a4d8de;
+  --color-acerto-suave: #cde3bb;
+
+  --font-sans: "Nunito", system-ui, sans-serif;
+  --font-slab: "Roboto Slab", Georgia, serif;
+  --font-numeros: "Barlow Condensed", "Nunito", sans-serif;
+
+  --radius-padrao: 16px;
+}
+
+@layer base {
+  html {
+    color: var(--color-texto);
+    background: #ffffff;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-texto);
+    outline-offset: 2px;
+  }
+}
