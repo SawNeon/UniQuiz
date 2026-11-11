@@ -12,7 +12,7 @@ O repositório tem duas partes:
 
 ## Como rodar no computador
 
-Você precisa de JDK 21, Maven 3.9, Node 22 e Docker.
+Você precisa de JDK 21, Node 22 ou mais novo e Docker. O Maven vem pelo wrapper (`./mvnw`, ou `mvnw.cmd` no Windows), que baixa a versão certa na primeira vez.
 
 1. Copie `.env.example` para `.env` e preencha `UNIQUIZ_DB_SENHA` (senha forte para o SQL Server local) e `UNIQUIZ_ADMIN_SENHA` (no mínimo 12 caracteres).
 2. Suba o banco e crie a base `uniquiz`:
@@ -24,7 +24,7 @@ Você precisa de JDK 21, Maven 3.9, Node 22 e Docker.
 3. Rode a API no perfil `dev`, que também carrega o conteúdo de exemplo (`db/dev`):
 
    ```bash
-   cd api && UNIQUIZ_DB_SENHA=... UNIQUIZ_ADMIN_SENHA=... mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   cd api && UNIQUIZ_DB_SENHA=... UNIQUIZ_ADMIN_SENHA=... ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
 4. Rode o aplicativo web. O Vite repassa `/api` para a porta 8080:
@@ -37,22 +37,21 @@ Você precisa de JDK 21, Maven 3.9, Node 22 e Docker.
 
 A documentação da API fica em `http://localhost:8080/api/docs/ui` no perfil `dev`.
 
-### Primeira vez no repositório
+### Formatação
 
-O código foi escrito sem rodar os formatadores. Antes do primeiro push, rode:
+O CI recusa código fora do padrão. Antes de commitar, rode `./mvnw spotless:apply` em `api/` e `npm run formatar` em `web/`.
 
-```bash
-cd api && mvn spotless:apply
-cd web && npm install && npm run formatar
-```
+### Dependências com alerta conhecido
 
-Faça commit do `web/package-lock.json` gerado. O CI usa `npm ci`, que exige esse arquivo.
+`npm audit` aponta um alerta moderado no `deepmerge`, que vem do `workbox-build` usado pelo plugin do PWA. Ele só roda durante o build e não vai para o navegador; ainda não há versão corrigida. `npm audit --omit=dev` fica limpo.
+
+O npm 11 bloqueia scripts de instalação por padrão. O do `esbuild` não é necessário: o build funciona sem ele.
 
 ## Testes
 
 | Onde | Comando | O que cobre |
 | --- | --- | --- |
-| API | `mvn verify` | Correção de cada tipo de desafio, pontuação, sequência de dias, importação, regras de arquitetura (ArchUnit) e o fluxo completo com SQL Server em Testcontainers (precisa de Docker) |
+| API | `./mvnw verify` | Correção de cada tipo de desafio, pontuação, sequência de dias, importação, regras de arquitetura (ArchUnit) e o fluxo completo com SQL Server em Testcontainers (precisa de Docker) |
 | Web | `npm run testar` | Componentes de desafio, estado da lição e o seletor de lacunas |
 | Ponta a ponta | `npm run testar:e2e` | Entrar, fazer uma lição e ver a classificação. Precisa da API rodando em `dev` |
 
