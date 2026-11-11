@@ -2,9 +2,9 @@ spring:
   application:
     name: uniquiz-api
   datasource:
-    url: ${UNIQUIZ_DB_URL}
-    username: ${UNIQUIZ_DB_USUARIO}
-    password: ${UNIQUIZ_DB_SENHA}
+    url: ${UNIQUIZ_DB_URL:}
+    username: ${UNIQUIZ_DB_USUARIO:}
+    password: ${UNIQUIZ_DB_SENHA:}
   jpa:
     open-in-view: false
     hibernate:

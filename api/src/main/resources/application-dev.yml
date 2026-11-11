@@ -2,7 +2,7 @@ spring:
   datasource:
     url: ${UNIQUIZ_DB_URL:jdbc:sqlserver://localhost:1433;databaseName=uniquiz;encrypt=true;trustServerCertificate=true}
     username: ${UNIQUIZ_DB_USUARIO:sa}
-    password: ${UNIQUIZ_DB_SENHA}
+    password: ${UNIQUIZ_DB_SENHA:}
   flyway:
     locations: classpath:db/migration,classpath:db/dev
 
@@ -12,4 +12,4 @@ uniquiz:
     cookie-seguro: false
   admin-inicial:
     usuario: ${UNIQUIZ_ADMIN_USUARIO:admin}
-    senha: ${UNIQUIZ_ADMIN_SENHA}
+    senha: ${UNIQUIZ_ADMIN_SENHA:}
