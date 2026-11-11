@@ -27,7 +27,7 @@
         <archunit.version>1.4.1</archunit.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <spotless.version>2.46.1</spotless.version>
-        <jacoco.version>0.8.13</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
     </properties>
 
     <dependencies>
