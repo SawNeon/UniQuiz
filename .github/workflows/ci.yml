@@ -31,7 +31,7 @@ jobs:
         run: ./mvnw -B verify -Pcobertura
       - name: Relatório de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cobertura-api
           path: api/target/site/jacoco
@@ -57,7 +57,7 @@ jobs:
         run: npm run cobertura
       - name: Relatório de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cobertura-web
           path: web/coverage
