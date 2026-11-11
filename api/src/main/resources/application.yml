@@ -1,0 +1,73 @@
+spring:
+  application:
+    name: uniquiz-api
+  datasource:
+    url: ${UNIQUIZ_DB_URL}
+    username: ${UNIQUIZ_DB_USUARIO}
+    password: ${UNIQUIZ_DB_SENHA}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
+        use_nationalized_character_data: true
+  flyway:
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /api/docs/ui
+
+uniquiz:
+  fuso-horario: America/Sao_Paulo
+  url-publica: ${UNIQUIZ_URL_PUBLICA:https://uniquiz.local}
+  sessao:
+    duracao: 30d
+    cookie-seguro: true
+  admin-inicial:
+    usuario: ${UNIQUIZ_ADMIN_USUARIO:}
+    senha: ${UNIQUIZ_ADMIN_SENHA:}
+  pontuacao:
+    multiplicador-facil: 1.0
+    multiplicador-medio: 1.5
+    multiplicador-dificil: 2.0
+    acertos-para-bonus: 3
+    bonus-sequencia-acertos: 5
+    bonus-licao-perfeita: 20
+    bonus-primeira-licao-do-dia: 10
+    pontos-por-nivel: 500
+  limite-requisicoes:
+    geral-por-minuto: 300
+    login-admin-por-minuto: 10
