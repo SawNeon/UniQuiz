@@ -11,6 +11,7 @@ services:
     depends_on:
       api:
         condition: service_healthy
+        restart: true
     restart: unless-stopped
 
   api:
