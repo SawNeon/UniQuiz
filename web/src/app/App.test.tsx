@@ -56,6 +56,23 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "UniQuiz · Administração" })).toBeInTheDocument();
   });
 
+  it("mostra uma página amigável para um endereço que não existe", async () => {
+    simularApi({});
+    await abrir("/qualquer-coisa");
+
+    expect(await screen.findByRole("heading", { name: "Não encontramos essa página" })).toBeInTheDocument();
+    expect(screen.getByText("/qualquer-coisa")).toBeInTheDocument();
+    expect(screen.queryByText(/Hey developer/i)).not.toBeInTheDocument();
+  });
+
+  it("leva o /index.html para o início", async () => {
+    simularApi({ "GET /eu": { status: 401 }, "GET /empresas": { corpo: [] } });
+    await abrir("/index.html");
+
+    expect(await screen.findByRole("heading", { name: "UniQuiz" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/entrar");
+  });
+
   it("abre a validação pública do certificado sem sessão", async () => {
     simularApi({ "GET /publico/certificados/ABC": { status: 404, corpo: { detail: "Não encontrado." } } });
     await abrir("/certificado/ABC");
