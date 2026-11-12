@@ -5,6 +5,7 @@ test("colaborador entra, faz uma lição e vê a classificação", async ({ page
   await page.getByLabel("Empresa").selectOption({ label: "Unimed Exemplo" });
   await page.getByLabel("Setor").selectOption({ label: "Tecnologia da Informação" });
   await page.getByRole("button", { name: "Bruno Teste" }).click();
+  await page.getByLabel(/PIN/).fill("123");
   await page.getByRole("button", { name: "Sim, sou eu" }).click();
 
   await page

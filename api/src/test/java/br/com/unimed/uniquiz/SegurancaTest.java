@@ -60,7 +60,9 @@ class SegurancaTest extends TesteDeIntegracao {
 
     @Test
     void cookieDeSessaoEHttpOnlyESameSite() throws Exception {
-        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", idDoColaborador("Ana Exemplo"))))
+        mvc.perform(comJson(
+                        post("/api/sessao"),
+                        Map.of("colaboradorId", idDoColaborador("Ana Exemplo"), "pin", PIN_DE_TESTE)))
                 .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
                 .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")));
     }
@@ -76,7 +78,7 @@ class SegurancaTest extends TesteDeIntegracao {
                 .andExpect(status().isNoContent());
 
         mvc.perform(get("/api/eu").cookie(sessao)).andExpect(status().isUnauthorized());
-        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", carla)))
+        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", carla, "pin", PIN_DE_TESTE)))
                 .andExpect(status().isUnprocessableEntity());
     }
 

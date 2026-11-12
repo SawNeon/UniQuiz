@@ -46,7 +46,31 @@ class CorrecaoDeDesafiosTest {
             assertThat(publico).isInstanceOf(ConteudoPublico.MultiplaEscolha.class);
             assertThat(((ConteudoPublico.MultiplaEscolha) publico).alternativas())
                     .extracting(ConteudoPublico.AlternativaPublica::texto)
-                    .containsExactly("Tirar dados pessoais", "Corrigir a digitação");
+                    .containsExactlyInAnyOrder("Tirar dados pessoais", "Corrigir a digitação");
+        }
+
+        @Test
+        void alternativasMudamDeLugarACadaTentativaParaACertaNaoTerPosicaoFixa() {
+            ConteudoMultiplaEscolha comQuatro = new ConteudoMultiplaEscolha(List.of(
+                    new Alternativa("a", "Certa", true, ""),
+                    new Alternativa("b", "Errada 1", false, "Motivo 1"),
+                    new Alternativa("c", "Errada 2", false, "Motivo 2"),
+                    new Alternativa("d", "Errada 3", false, "Motivo 3")));
+
+            java.util.Set<String> posicoesDaCerta = new java.util.HashSet<>();
+            java.util.Set<List<String>> ordens = new java.util.HashSet<>();
+            for (long semente = 0; semente < 40; semente++) {
+                var publico = (ConteudoPublico.MultiplaEscolha) comQuatro.paraColaborador(new Random(semente));
+                List<String> ids = publico.alternativas().stream()
+                        .map(ConteudoPublico.AlternativaPublica::id)
+                        .toList();
+                posicoesDaCerta.add(String.valueOf(ids.indexOf("a")));
+                ordens.add(ids);
+                assertThat(ids).containsExactlyInAnyOrder("a", "b", "c", "d");
+            }
+
+            assertThat(posicoesDaCerta).hasSize(4);
+            assertThat(ordens.size()).isGreaterThan(10);
         }
 
         @Test

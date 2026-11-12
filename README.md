@@ -33,7 +33,9 @@ Você precisa de JDK 21, Node 22 ou mais novo e Docker. O Maven vem pelo wrapper
    cd web && npm install && npm run dev
    ```
 
-5. Abra `http://localhost:5173`. Entre como "Ana Exemplo" ou "Bruno Teste" (dados fictícios). O painel fica em `/admin`, com o usuário `admin` e a senha que você definiu.
+5. Abra `http://localhost:5173`. Entre como "Ana Exemplo" ou "Bruno Teste" (dados fictícios): no primeiro acesso a pessoa cria um PIN de 3 números, e nas próximas vezes digita o mesmo PIN. O painel fica em `/admin`, com o usuário `admin` e a senha que você definiu.
+
+No painel, em Colaboradores, dá para cadastrar uma pessoa avulsa (nome, empresa, setor e, se quiser, o PIN de 3 números; sem PIN, a pessoa cria o dela no primeiro acesso), importar a planilha do RH e redefinir o PIN de quem esqueceu (a pessoa cria outro no próximo acesso). Tudo fica no SQL Server; o PIN é guardado só como hash, e 5 erros seguidos bloqueiam a pessoa por 15 minutos.
 
 A documentação da API fica em `http://localhost:8080/api/docs/ui` no perfil `dev`.
 
@@ -58,6 +60,26 @@ O npm 11 bloqueia scripts de instalação por padrão. O do `esbuild` não é ne
 
 Os testes de integração compartilham um único SQL Server e voltam ao conteúdo de exemplo antes de cada teste, então podem rodar em qualquer ordem.
 
+### Testes de carga
+
+A pasta `carga/` tem uma ferramenta em Node puro (sem dependências) que simula muita gente usando ao mesmo tempo: entrar com PIN, fazer a lição inteira com sorteio e ver a classificação. Ela cria dados fictícios com o prefixo "Carga" (pessoas, uma empresa, um setor, um módulo e um banco de desafios), mede latência (p50, p95, p99), erros e vazão por operação, e confere se cada lição sorteou a quantidade certa e foi corrigida como certa.
+
+```bash
+UNIQUIZ_ADMIN_SENHA=... node carga/executar.mjs --base=https://servidor --insegura --usuarios=500 --cenarios=
+UNIQUIZ_ADMIN_SENHA=... node carga/executar.mjs --base=https://servidor --insegura --reutilizar --usuarios=500 --cenarios=licao
+```
+
+| Cenário | O que faz |
+| --- | --- |
+| `leitura` | Quem abre o app lê empresas, setores e nomes, com N conexões durante `--duracao` segundos |
+| `login` | N pessoas entram com PIN no mesmo instante |
+| `licao` | N pessoas fazem a lição inteira; `--rampa` espalha a chegada e `--pensar=min,max` simula o tempo de resposta em milissegundos |
+| `continuo` | N pessoas repetem lições durante `--duracao` segundos |
+| `limite` e `limite-falso` | Passam do limite de requisições, sem e com um `X-Forwarded-For` forjado |
+| `forca-bruta` | Chuta PINs em paralelo contra uma pessoa para conferir que o bloqueio vale de verdade |
+
+Todo o tráfego sai de um único IP, e a API limita cada IP a 300 requisições por minuto. Para medir a capacidade, suba esse limite só durante o teste (`UNIQUIZ_LIMITE_REQUISICOES_GERAL_POR_MINUTO`) e volte ao padrão depois. Os dados "Carga" precisam ser apagados do banco ao terminar. Não rode contra a produção.
+
 ## Variáveis de ambiente da API
 
 | Variável | Para quê |
@@ -71,7 +93,8 @@ Pontuação, limites de requisições e duração da sessão ficam em `api/src/m
 
 ## Como o jogo funciona
 
-- **Caminho**: módulos com lições de 5 a 8 desafios. As lições liberam em sequência. Cada módulo pode ter um conteúdo para estudar antes.
+- **Caminho**: módulos com lições, que liberam em sequência. Cada módulo pode ter um conteúdo para estudar antes.
+- **Sorteio de desafios**: ao criar a lição, o admin escolhe quantos desafios de cada nível (fácil, médio, difícil) cada pessoa responde, de 0 a 30 por nível. O banco da lição pode ter mais desafios publicados do que isso: a cada tentativa o sistema sorteia a quantidade pedida de cada nível e embaralha a ordem, e as alternativas da múltipla escolha também mudam de lugar. Assim ninguém decora a sequência das respostas. Como todos respondem a mesma quantidade por nível, a pontuação e a classificação continuam justas. Para publicar, o banco publicado de cada nível precisa ter pelo menos a quantidade sorteada, e tirar do ar um desafio que deixaria o banco menor que isso é recusado. Cada tentativa guarda o que sorteou, e só esses desafios aceitam resposta nela. Lições que já existiam passam a sortear todos os seus desafios publicados, como antes.
 - **Tipos de desafio**: múltipla escolha, verdadeiro ou falso e completar clicando. Cada tipo é uma classe em `conteudo/dominio` que valida o próprio conteúdo, gera a versão sem gabarito e corrige a resposta. Um tipo novo não mexe nos outros.
 - **Correção**: sempre no servidor. A resposta certa só sai depois que a pessoa responde.
 - **Pontos**: pontos do desafio × dificuldade (1; 1,5; 2), bônus a partir do 3º acerto seguido, de lição perfeita e da primeira lição do dia. Os pontos só entram no histórico (`evento_pontos`) quando a lição é concluída, então abandonar e recomeçar não rende pontos extras. Refazer uma lição já concluída vale metade dos pontos uma vez, depois não pontua mais.

@@ -8,12 +8,13 @@ import {
   useOrdem,
   useStatus,
 } from "../../api/admin";
-import type { DesafioParaAdmin } from "../../api/tipos";
+import type { DesafioParaAdmin, LicaoParaAdmin } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
 import { Icone } from "../../componentes/ui/Icone";
 import { BotoesDeOrdem, SeletorDeStatus } from "./componentes";
 import { EditorDeDesafio } from "./EditorDeDesafio";
+import { NIVEIS } from "./niveis";
 
 type Edicao = { modo: "novo" } | { modo: "editar"; desafio: DesafioParaAdmin } | null;
 
@@ -22,6 +23,28 @@ const TIPOS = {
   VERDADEIRO_OU_FALSO: "Verdadeiro ou falso",
   COMPLETAR_CLICANDO: "Completar clicando",
 };
+
+const DIFICULDADES = {
+  FACIL: "Fácil",
+  MEDIO: "Médio",
+  DIFICIL: "Difícil",
+};
+
+function ResumoDoSorteio({ licao }: { licao: LicaoParaAdmin }) {
+  return (
+    <ul aria-label="Sorteio da lição" className="flex flex-col gap-1 rounded-xl bg-neutro/60 p-3">
+      {NIVEIS.map(({ chave, rotulo }) => {
+        const pede = licao.quantidades[chave];
+        const tem = licao.publicadosPorNivel[chave];
+        return (
+          <li key={chave} className={tem < pede ? "font-extrabold" : ""}>
+            {rotulo}: sorteia {pede} de {tem} publicados{tem < pede ? " (faltam desafios)" : ""}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function TelaDaLicaoAdmin() {
   const licaoId = Number(useParams().licaoId);
@@ -47,7 +70,12 @@ export function TelaDaLicaoAdmin() {
         <h1 className="text-3xl font-extrabold">{licao?.titulo ?? "Lição"}</h1>
         {!edicao && <Botao onClick={() => setEdicao({ modo: "novo" })}>Novo desafio</Botao>}
       </div>
-      <p>Uma lição publicada precisa ter de 5 a 8 desafios publicados.</p>
+      <p>
+        O banco da lição pode ter mais desafios do que cada pessoa responde: a cada tentativa o sistema
+        sorteia os desafios, em ordem aleatória. Para publicar, cada nível precisa ter publicados pelo menos
+        tantos desafios quanto o sorteio pede. O sorteio se ajusta na tela do caminho.
+      </p>
+      {licao && <ResumoDoSorteio licao={licao} />}
       {erro && <MensagemDeErro erro={erro} />}
 
       {edicao && (
@@ -74,7 +102,8 @@ export function TelaDaLicaoAdmin() {
               <div className="flex min-w-48 flex-1 flex-col">
                 <span className="font-extrabold">{desafio.enunciado}</span>
                 <span className="text-sm">
-                  {TIPOS[desafio.tipo]} · {desafio.pontos} pontos · versão {desafio.versao}
+                  {TIPOS[desafio.tipo]} · {DIFICULDADES[desafio.dificuldade]} · {desafio.pontos} pontos ·
+                  versão {desafio.versao}
                 </span>
               </div>
               <SeletorDeStatus

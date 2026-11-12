@@ -1,5 +1,6 @@
 package br.com.unimed.uniquiz.conteudo.persistencia;
 
+import br.com.unimed.uniquiz.conteudo.dominio.Dificuldade;
 import br.com.unimed.uniquiz.conteudo.dominio.StatusPublicacao;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,8 @@ public interface DesafioRepository extends JpaRepository<Desafio, Long> {
     List<Desafio> findByLicaoIdAndStatusOrderByOrdemAsc(Long licaoId, StatusPublicacao status);
 
     long countByLicaoIdAndStatus(Long licaoId, StatusPublicacao status);
+
+    long countByLicaoIdAndStatusAndDificuldade(Long licaoId, StatusPublicacao status, Dificuldade dificuldade);
 
     @Query("select coalesce(max(d.ordem), 0) from Desafio d where d.licaoId = :licaoId")
     int maiorOrdem(Long licaoId);

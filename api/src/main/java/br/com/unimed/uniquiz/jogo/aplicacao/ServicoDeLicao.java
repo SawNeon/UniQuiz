@@ -13,10 +13,13 @@ import br.com.unimed.uniquiz.conteudo.aplicacao.LeitorDeConteudo;
 import br.com.unimed.uniquiz.conteudo.aplicacao.ServicoDeConteudoPublicado;
 import br.com.unimed.uniquiz.conteudo.dominio.Correcao;
 import br.com.unimed.uniquiz.conteudo.dominio.RespostaDoColaborador;
+import br.com.unimed.uniquiz.conteudo.dominio.SorteioDeDesafios;
 import br.com.unimed.uniquiz.jogo.dominio.RegrasDePontuacao;
 import br.com.unimed.uniquiz.jogo.dominio.RegrasDePontuacao.PontosDoAcerto;
 import br.com.unimed.uniquiz.jogo.dominio.SequenciaDeDias;
 import br.com.unimed.uniquiz.jogo.dominio.StatusDaTentativa;
+import br.com.unimed.uniquiz.jogo.persistencia.DesafioDaTentativa;
+import br.com.unimed.uniquiz.jogo.persistencia.DesafioDaTentativaRepository;
 import br.com.unimed.uniquiz.jogo.persistencia.Resposta;
 import br.com.unimed.uniquiz.jogo.persistencia.RespostaRepository;
 import br.com.unimed.uniquiz.jogo.persistencia.SequenciaDiaria;
@@ -71,6 +74,7 @@ public class ServicoDeLicao {
     private final ServicoDePontos pontos;
     private final ServicoDeTrofeus trofeus;
     private final TentativaRepository tentativas;
+    private final DesafioDaTentativaRepository desafiosDaTentativa;
     private final RespostaRepository respostas;
     private final SequenciaDiariaRepository sequencias;
     private final LeitorDeConteudo leitor;
@@ -85,6 +89,7 @@ public class ServicoDeLicao {
             ServicoDePontos pontos,
             ServicoDeTrofeus trofeus,
             TentativaRepository tentativas,
+            DesafioDaTentativaRepository desafiosDaTentativa,
             RespostaRepository respostas,
             SequenciaDiariaRepository sequencias,
             LeitorDeConteudo leitor,
@@ -97,6 +102,7 @@ public class ServicoDeLicao {
         this.pontos = pontos;
         this.trofeus = trofeus;
         this.tentativas = tentativas;
+        this.desafiosDaTentativa = desafiosDaTentativa;
         this.respostas = respostas;
         this.sequencias = sequencias;
         this.leitor = leitor;
@@ -111,7 +117,7 @@ public class ServicoDeLicao {
         if (!progresso.desbloqueada(colaboradorId, licaoId)) {
             throw new ErroDeNegocio("Conclua as lições anteriores para liberar esta.");
         }
-        List<DesafioEmJogo> desafios = conteudo.desafios(licaoId);
+        List<DesafioEmJogo> desafios = sortearDesafios(licao);
 
         tentativas
                 .findByColaboradorIdAndLicaoIdAndStatus(colaboradorId, licaoId, StatusDaTentativa.EM_ANDAMENTO)
@@ -128,6 +134,7 @@ public class ServicoDeLicao {
                 relogio.instant(),
                 desafios.size(),
                 RegrasDePontuacao.percentualAoRefazer(conclusoesAnteriores)));
+        registrarSorteio(tentativa, desafios);
 
         return new TentativaIniciada(
                 tentativa.getId(),
@@ -136,14 +143,41 @@ public class ServicoDeLicao {
                 desafios.stream().map(desafio -> desafio.publico(aleatorio)).toList());
     }
 
+    private List<DesafioEmJogo> sortearDesafios(ConteudoPublicado.Licao licao) {
+        List<DesafioEmJogo> sorteados = SorteioDeDesafios.sortear(
+                conteudo.desafios(licao.id()), DesafioEmJogo::dificuldade, licao.quantidades(), aleatorio);
+        if (sorteados.isEmpty()) {
+            throw new ErroDeNegocio("Esta lição ainda não tem desafios para responder.");
+        }
+        return sorteados;
+    }
+
+    private void registrarSorteio(Tentativa tentativa, List<DesafioEmJogo> sorteados) {
+        List<DesafioDaTentativa> registros = new ArrayList<>();
+        for (int posicao = 0; posicao < sorteados.size(); posicao++) {
+            registros.add(new DesafioDaTentativa(
+                    tentativa.getId(), sorteados.get(posicao).id(), posicao));
+        }
+        desafiosDaTentativa.saveAll(registros);
+    }
+
+    private DesafioEmJogo desafioDaTentativa(Tentativa tentativa, Long desafioId) {
+        List<Long> sorteados = desafiosDaTentativa.findByTentativaIdOrderByPosicaoAsc(tentativa.getId()).stream()
+                .map(DesafioDaTentativa::getDesafioId)
+                .toList();
+        boolean tentativaAnteriorAoSorteio = sorteados.isEmpty();
+        return conteudo.desafios(tentativa.getLicaoId()).stream()
+                .filter(candidato -> candidato.id().equals(desafioId))
+                .filter(candidato -> tentativaAnteriorAoSorteio || sorteados.contains(candidato.id()))
+                .findFirst()
+                .orElseThrow(() -> new RecursoNaoEncontrado("Esse desafio não faz parte da lição."));
+    }
+
     @Transactional
     public RespostaCorrigida responder(Long colaboradorId, Long tentativaId, Long desafioId, JsonNode respostaJson) {
         Tentativa tentativa = tentativaDoColaborador(colaboradorId, tentativaId);
         tentativa.exigirEmAndamento();
-        DesafioEmJogo desafio = conteudo.desafios(tentativa.getLicaoId()).stream()
-                .filter(candidato -> candidato.id().equals(desafioId))
-                .findFirst()
-                .orElseThrow(() -> new RecursoNaoEncontrado("Esse desafio não faz parte da lição."));
+        DesafioEmJogo desafio = desafioDaTentativa(tentativa, desafioId);
 
         List<Resposta> anteriores = respostas.findByTentativaIdOrderByIdAsc(tentativaId);
         boolean segundaChance = exigirQuePodeResponder(tentativa, anteriores, desafioId);

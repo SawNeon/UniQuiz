@@ -5,10 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.Duration;
 import java.time.Instant;
 
 @Entity
 public class Colaborador {
+
+    public static final int TENTATIVAS_DE_PIN_ANTES_DO_BLOQUEIO = 5;
+    public static final Duration TEMPO_DE_BLOQUEIO_DO_PIN = Duration.ofMinutes(15);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +24,9 @@ public class Colaborador {
     private String nomeNormalizado;
     private boolean ativo;
     private Instant criadoEm;
+    private String pinHash;
+    private int tentativasFalhasPin;
+    private Instant pinBloqueadoAte;
 
     protected Colaborador() {}
 
@@ -42,6 +49,45 @@ public class Colaborador {
 
     public void desativar() {
         this.ativo = false;
+    }
+
+    public boolean temPin() {
+        return pinHash != null;
+    }
+
+    public void definirPin(String hash) {
+        this.pinHash = hash;
+        liberarPin();
+    }
+
+    public void removerPin() {
+        this.pinHash = null;
+        liberarPin();
+    }
+
+    public boolean pinBloqueado(Instant agora) {
+        return pinBloqueadoAte != null && agora.isBefore(pinBloqueadoAte);
+    }
+
+    public void registrarFalhaDePin(Instant agora) {
+        tentativasFalhasPin++;
+        if (tentativasFalhasPin >= TENTATIVAS_DE_PIN_ANTES_DO_BLOQUEIO) {
+            pinBloqueadoAte = agora.plus(TEMPO_DE_BLOQUEIO_DO_PIN);
+            tentativasFalhasPin = 0;
+        }
+    }
+
+    public void registrarAcertoDePin() {
+        liberarPin();
+    }
+
+    private void liberarPin() {
+        tentativasFalhasPin = 0;
+        pinBloqueadoAte = null;
+    }
+
+    public String getPinHash() {
+        return pinHash;
     }
 
     public Long getId() {

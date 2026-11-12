@@ -73,7 +73,7 @@ class AdminConteudoController {
 
     @PutMapping("/licoes/{licaoId}")
     ConteudoParaAdmin.Licao renomearLicao(@PathVariable Long licaoId, @Valid @RequestBody DadosDaLicao dados) {
-        return conteudo.renomearLicao(licaoId, dados);
+        return conteudo.atualizarLicao(licaoId, dados);
     }
 
     @PostMapping("/licoes/{licaoId}/status")

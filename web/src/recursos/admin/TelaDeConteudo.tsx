@@ -8,11 +8,13 @@ import {
   useRenomearLicao,
   useStatus,
 } from "../../api/admin";
-import type { ModuloParaAdmin } from "../../api/tipos";
+import type { ModuloParaAdmin, PorNivel } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
 import { BotoesDeOrdem, Entrada, SeletorDeStatus } from "./componentes";
 import { FormularioDeModulo } from "./FormularioDeModulo";
+import { totalDeDesafios } from "./niveis";
+import { EditorDeQuantidades, SorteioDaLicao } from "./SorteioDaLicao";
 
 export function TelaDeConteudo() {
   const modulos = useModulosAdmin();
@@ -33,8 +35,9 @@ export function TelaDeConteudo() {
         {!criando && <Botao onClick={() => setCriando(true)}>Novo módulo</Botao>}
       </div>
       <p>
-        O colaborador vê só o que está publicado. Publique os desafios, depois a lição (de 5 a 8 desafios) e
-        por último o módulo.
+        O colaborador vê só o que está publicado. Publique os desafios, depois a lição e por último o módulo.
+        Em cada lição você escolhe quantos desafios de cada nível a pessoa responde; o banco pode ter mais, e
+        o sistema sorteia a cada tentativa.
       </p>
       {criando && <FormularioDeModulo aoTerminar={() => setCriando(false)} />}
       {ordem.isError && <MensagemDeErro erro={ordem.error} />}
@@ -64,6 +67,7 @@ function CartaoDoModulo({
 }) {
   const [editando, setEditando] = useState(false);
   const [novaLicao, setNovaLicao] = useState("");
+  const [novasQuantidades, setNovasQuantidades] = useState<PorNivel>({ facil: 2, medio: 2, dificil: 1 });
   const statusDoModulo = useStatus("modulos");
   const statusDaLicao = useStatus("licoes");
   const criarLicao = useCriarLicao();
@@ -119,32 +123,45 @@ function CartaoDoModulo({
             >
               Desafios
             </Link>
+            <SorteioDaLicao key={JSON.stringify(licao.quantidades)} licao={licao} />
           </li>
         ))}
       </ol>
 
       <form
-        className="flex flex-wrap gap-2"
+        className="flex flex-col gap-3 rounded-xl bg-white p-3"
         onSubmit={(evento) => {
           evento.preventDefault();
           if (novaLicao.trim()) {
             criarLicao.mutate(
-              { moduloId: modulo.id, titulo: novaLicao },
+              { moduloId: modulo.id, titulo: novaLicao, quantidades: novasQuantidades },
               { onSuccess: () => setNovaLicao("") },
             );
           }
         }}
       >
-        <Entrada
-          aria-label={`Título da nova lição em ${modulo.titulo}`}
-          placeholder="Título da nova lição"
-          value={novaLicao}
-          onChange={(evento) => setNovaLicao(evento.target.value)}
-          className="flex-1"
+        <div className="flex flex-wrap gap-2">
+          <Entrada
+            aria-label={`Título da nova lição em ${modulo.titulo}`}
+            placeholder="Título da nova lição"
+            value={novaLicao}
+            onChange={(evento) => setNovaLicao(evento.target.value)}
+            className="flex-1"
+          />
+          <Botao type="submit" disabled={criarLicao.isPending}>
+            Adicionar lição
+          </Botao>
+        </div>
+        <p className="text-sm">
+          Quantos desafios de cada nível cada pessoa responde. O banco da lição pode ter mais desafios do que
+          isso: a cada tentativa o sistema sorteia, em ordem aleatória. Esta lição terá{" "}
+          <strong>{totalDeDesafios(novasQuantidades)}</strong> desafios por tentativa.
+        </p>
+        <EditorDeQuantidades
+          valor={novasQuantidades}
+          aoMudar={setNovasQuantidades}
+          rotuloDaLicao="na nova lição"
         />
-        <Botao type="submit" disabled={criarLicao.isPending}>
-          Adicionar lição
-        </Botao>
       </form>
     </section>
   );

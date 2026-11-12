@@ -1,6 +1,7 @@
 package br.com.unimed.uniquiz.colaborador.web;
 
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores;
+import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores.ColaboradorDaEntrada;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores.ItemDaLista;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,7 @@ class EntradaController {
     }
 
     @GetMapping("/setores/{setorId}/colaboradores")
-    List<ItemDaLista> colaboradoresDoSetor(@PathVariable Long setorId) {
+    List<ColaboradorDaEntrada> colaboradoresDoSetor(@PathVariable Long setorId) {
         return colaboradores.ativosDoSetor(setorId);
     }
 }

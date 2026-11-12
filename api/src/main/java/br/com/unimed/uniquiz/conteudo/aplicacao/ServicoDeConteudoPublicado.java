@@ -107,6 +107,6 @@ public class ServicoDeConteudoPublicado {
     }
 
     private static ConteudoPublicado.Licao publicada(Licao licao) {
-        return new ConteudoPublicado.Licao(licao.getId(), licao.getModuloId(), licao.getTitulo());
+        return new ConteudoPublicado.Licao(licao.getId(), licao.getModuloId(), licao.getTitulo(), licao.quantidades());
     }
 }

@@ -5,6 +5,7 @@ import type {
   DadosDoDesafio,
   DesafioParaAdmin,
   ModuloParaAdmin,
+  PorNivel,
   ResumoDaImportacao,
   StatusPublicacao,
   Temporada,
@@ -89,8 +90,8 @@ export function useOrdem(caminho: string, invalidar: QueryKey[]) {
 
 export function useCriarLicao() {
   return useAcao(
-    ({ moduloId, titulo }: { moduloId: number; titulo: string }) =>
-      api.post(`/admin/modulos/${moduloId}/licoes`, { titulo }),
+    ({ moduloId, titulo, quantidades }: { moduloId: number; titulo: string; quantidades: PorNivel }) =>
+      api.post(`/admin/modulos/${moduloId}/licoes`, { titulo, quantidades }),
     [chavesAdmin.modulos],
   );
 }
@@ -99,6 +100,14 @@ export function useRenomearLicao() {
   return useAcao(
     ({ licaoId, titulo }: { licaoId: number; titulo: string }) =>
       api.put(`/admin/licoes/${licaoId}`, { titulo }),
+    [chavesAdmin.modulos],
+  );
+}
+
+export function useDefinirQuantidades() {
+  return useAcao(
+    ({ licaoId, titulo, quantidades }: { licaoId: number; titulo: string; quantidades: PorNivel }) =>
+      api.put(`/admin/licoes/${licaoId}`, { titulo, quantidades }),
     [chavesAdmin.modulos],
   );
 }
@@ -146,6 +155,21 @@ export function useAjustarColaborador() {
   return useAcao(
     ({ id, nome, ativo }: { id: number; nome: string; ativo: boolean }) =>
       api.patch(`/admin/colaboradores/${id}`, { nome, ativo }),
+    [["admin", "colaboradores"]],
+  );
+}
+
+export function useCadastrarColaborador() {
+  return useAcao(
+    (dados: { nome: string; empresa: string; setor: string; pin?: string }) =>
+      api.post<ColaboradorParaAdmin>("/admin/colaboradores", dados),
+    [["admin", "colaboradores"], ["empresas"], ["setores"], ["colaboradores"]],
+  );
+}
+
+export function useRedefinirPin() {
+  return useAcao(
+    (id: number) => api.post(`/admin/colaboradores/${id}/redefinir-pin`),
     [["admin", "colaboradores"]],
   );
 }

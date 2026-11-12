@@ -3,6 +3,7 @@ import { api } from "./cliente";
 import type {
   Certificado,
   Classificacao,
+  ColaboradorDaEntrada,
   ItemDaLista,
   Material,
   ModuloNoCaminho,
@@ -64,7 +65,7 @@ export function useSetores(empresaId: number | null) {
 export function useColaboradoresDoSetor(setorId: number | null) {
   return useQuery({
     queryKey: ["colaboradores", setorId],
-    queryFn: () => api.get<ItemDaLista[]>(`/setores/${setorId}/colaboradores`),
+    queryFn: () => api.get<ColaboradorDaEntrada[]>(`/setores/${setorId}/colaboradores`),
     enabled: setorId !== null,
   });
 }
@@ -72,7 +73,7 @@ export function useColaboradoresDoSetor(setorId: number | null) {
 export function useEntrar() {
   const cliente = useQueryClient();
   return useMutation({
-    mutationFn: (colaboradorId: number) => api.post("/sessao", { colaboradorId }),
+    mutationFn: (dados: { colaboradorId: number; pin: string }) => api.post("/sessao", dados),
     onSuccess: () => cliente.invalidateQueries(),
   });
 }

@@ -3,6 +3,7 @@ package br.com.unimed.uniquiz.conteudo.aplicacao;
 import br.com.unimed.uniquiz.conteudo.dominio.ConteudoDesafio;
 import br.com.unimed.uniquiz.conteudo.dominio.ConteudoPublico;
 import br.com.unimed.uniquiz.conteudo.dominio.Dificuldade;
+import br.com.unimed.uniquiz.conteudo.dominio.QuantidadesPorNivel;
 import br.com.unimed.uniquiz.conteudo.dominio.TipoDesafio;
 import java.util.List;
 import java.util.random.RandomGenerator;
@@ -13,7 +14,7 @@ public final class ConteudoPublicado {
 
     public record Modulo(Long id, String titulo, String descricao, boolean temMaterial, List<Licao> licoes) {}
 
-    public record Licao(Long id, Long moduloId, String titulo) {}
+    public record Licao(Long id, Long moduloId, String titulo, QuantidadesPorNivel quantidades) {}
 
     public record Material(Long moduloId, String titulo, String conteudo) {}
 

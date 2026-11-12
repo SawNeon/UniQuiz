@@ -75,6 +75,10 @@ public class Desafio {
         this.status = novoStatus;
     }
 
+    public boolean saiDoBancoAoMudarPara(StatusPublicacao novoStatus) {
+        return status == StatusPublicacao.PUBLICADO && novoStatus != StatusPublicacao.PUBLICADO;
+    }
+
     public void mover(int novaOrdem) {
         this.ordem = novaOrdem;
     }

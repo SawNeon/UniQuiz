@@ -9,9 +9,11 @@ import br.com.unimed.uniquiz.colaborador.persistencia.SetorRepository;
 import br.com.unimed.uniquiz.comum.ErroDeNegocio;
 import br.com.unimed.uniquiz.comum.RecursoNaoEncontrado;
 import br.com.unimed.uniquiz.comum.Textos;
+import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +24,28 @@ public class ServicoDeColaboradores {
 
     public record ItemDaLista(Long id, String nome) {}
 
-    public record ColaboradorParaAdmin(Long id, String nome, String setor, String empresa, boolean ativo) {}
+    public record ColaboradorDaEntrada(Long id, String nome, boolean temPin) {}
+
+    public record ColaboradorParaAdmin(
+            Long id, String nome, String setor, String empresa, boolean ativo, boolean temPin) {}
 
     private final EmpresaRepository empresas;
     private final SetorRepository setores;
     private final ColaboradorRepository colaboradores;
+    private final PasswordEncoder codificador;
+    private final Clock relogio;
 
     public ServicoDeColaboradores(
-            EmpresaRepository empresas, SetorRepository setores, ColaboradorRepository colaboradores) {
+            EmpresaRepository empresas,
+            SetorRepository setores,
+            ColaboradorRepository colaboradores,
+            PasswordEncoder codificador,
+            Clock relogio) {
         this.empresas = empresas;
         this.setores = setores;
         this.colaboradores = colaboradores;
+        this.codificador = codificador;
+        this.relogio = relogio;
     }
 
     @Transactional(readOnly = true)
@@ -50,9 +63,10 @@ public class ServicoDeColaboradores {
     }
 
     @Transactional(readOnly = true)
-    public List<ItemDaLista> ativosDoSetor(Long setorId) {
+    public List<ColaboradorDaEntrada> ativosDoSetor(Long setorId) {
         return colaboradores.findBySetorIdAndAtivoTrueOrderByNomeAsc(setorId).stream()
-                .map(colaborador -> new ItemDaLista(colaborador.getId(), colaborador.getNome()))
+                .map(colaborador ->
+                        new ColaboradorDaEntrada(colaborador.getId(), colaborador.getNome(), colaborador.temPin()))
                 .toList();
     }
 
@@ -86,8 +100,58 @@ public class ServicoDeColaboradores {
                         colaborador.getNome(),
                         nomesDosSetores.get(colaborador.getSetorId()),
                         nomesDasEmpresas.get(colaborador.getEmpresaId()),
-                        colaborador.isAtivo()))
+                        colaborador.isAtivo(),
+                        colaborador.temPin()))
                 .toList();
+    }
+
+    @Transactional
+    public ColaboradorParaAdmin cadastrar(String nome, String nomeDaEmpresa, String nomeDoSetor, String pin) {
+        Empresa empresa = empresaExistenteOuNova(Textos.limpar(nomeDaEmpresa));
+        Setor setor = setorExistenteOuNovo(empresa, Textos.limpar(nomeDoSetor));
+        exigirNomeLivre(empresa, setor, nome);
+        Colaborador colaborador = colaboradores.save(novoColaborador(empresa, setor, nome, pin));
+        return new ColaboradorParaAdmin(
+                colaborador.getId(),
+                colaborador.getNome(),
+                setor.getNome(),
+                empresa.getNome(),
+                true,
+                colaborador.temPin());
+    }
+
+    private Empresa empresaExistenteOuNova(String nome) {
+        return empresas.findAll().stream()
+                .filter(existente -> mesmoNome(existente.getNome(), nome))
+                .findFirst()
+                .orElseGet(() -> empresas.save(new Empresa(nome)));
+    }
+
+    private Setor setorExistenteOuNovo(Empresa empresa, String nome) {
+        return setores.findByEmpresaIdOrderByNomeAsc(empresa.getId()).stream()
+                .filter(existente -> mesmoNome(existente.getNome(), nome))
+                .findFirst()
+                .orElseGet(() -> setores.save(new Setor(empresa.getId(), nome)));
+    }
+
+    private void exigirNomeLivre(Empresa empresa, Setor setor, String nome) {
+        if (colaboradores.existsByEmpresaIdAndSetorIdAndNomeNormalizado(
+                empresa.getId(), setor.getId(), Textos.normalizar(nome))) {
+            throw new ErroDeNegocio(
+                    "Já existe uma pessoa com esse nome nesse setor. Procure por ela em \"Ajustar colaboradores\".");
+        }
+    }
+
+    private Colaborador novoColaborador(Empresa empresa, Setor setor, String nome, String pin) {
+        Colaborador colaborador = new Colaborador(empresa.getId(), setor.getId(), nome, relogio.instant());
+        if (pin != null) {
+            colaborador.definirPin(codificador.encode(pin));
+        }
+        return colaborador;
+    }
+
+    private static boolean mesmoNome(String um, String outro) {
+        return Textos.normalizar(um).equals(Textos.normalizar(outro));
     }
 
     @Transactional

@@ -9,9 +9,9 @@ function apiDaEntrada(sessao: { status?: number; corpo?: unknown } = {}) {
     "GET /empresas/1/setores": { corpo: [{ id: 2, nome: "Tecnologia da Informação" }] },
     "GET /setores/2/colaboradores": {
       corpo: [
-        { id: 3, nome: "Ana Exemplo" },
-        { id: 4, nome: "Bruno Teste" },
-        { id: 5, nome: "João Ávila" },
+        { id: 3, nome: "Ana Exemplo", temPin: false },
+        { id: 4, nome: "Bruno Teste", temPin: true },
+        { id: 5, nome: "João Ávila", temPin: false },
       ],
     },
     "POST /sessao": sessao,
@@ -41,10 +41,43 @@ describe("TelaDeEntrada", () => {
     expect(
       screen.getByRole("heading", { name: "Você é Bruno Teste, do setor Tecnologia da Informação?" }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Digite o seu PIN de 3 números.")).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText("PIN"), "123");
     await userEvent.click(screen.getByRole("button", { name: "Sim, sou eu" }));
 
     expect(await screen.findByText("Página: /")).toBeInTheDocument();
-    expect(chamadas).toContainEqual({ metodo: "POST", caminho: "/sessao", corpo: { colaboradorId: 4 } });
+    expect(chamadas).toContainEqual({
+      metodo: "POST",
+      caminho: "/sessao",
+      corpo: { colaboradorId: 4, pin: "123" },
+    });
+  });
+
+  it("no primeiro acesso pede para criar um PIN de 3 números e só aceita números", async () => {
+    const chamadas = apiDaEntrada();
+    renderizar(<TelaDeEntrada />, { rota: "/entrar", caminho: "/entrar" });
+    await escolherSetor();
+    await userEvent.click(await screen.findByRole("button", { name: "Ana Exemplo" }));
+
+    expect(screen.getByText(/primeiro acesso/)).toBeInTheDocument();
+    const campo = screen.getByLabelText("Crie o seu PIN");
+    const botao = screen.getByRole("button", { name: "Sim, sou eu" });
+    expect(botao).toBeDisabled();
+
+    await userEvent.type(campo, "a1b2");
+    expect(campo).toHaveValue("12");
+    expect(botao).toBeDisabled();
+
+    await userEvent.type(campo, "3456");
+    expect(campo).toHaveValue("123");
+    await userEvent.click(botao);
+
+    expect(await screen.findByText("Página: /")).toBeInTheDocument();
+    expect(chamadas).toContainEqual({
+      metodo: "POST",
+      caminho: "/sessao",
+      corpo: { colaboradorId: 3, pin: "123" },
+    });
   });
 
   it("busca o nome ignorando acentos e maiúsculas", async () => {
@@ -65,17 +98,21 @@ describe("TelaDeEntrada", () => {
   it("permite voltar da confirmação e mostra o erro do servidor", async () => {
     apiDaEntrada({
       status: 422,
-      corpo: { detail: "Não encontramos esse nome entre os colaboradores ativos." },
+      corpo: { detail: "PIN incorreto." },
     });
     renderizar(<TelaDeEntrada />, { rota: "/entrar", caminho: "/entrar" });
     await escolherSetor();
 
-    await userEvent.click(await screen.findByRole("button", { name: "Ana Exemplo" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Bruno Teste" }));
+    await userEvent.type(screen.getByLabelText("PIN"), "999");
     await userEvent.click(screen.getByRole("button", { name: "Sim, sou eu" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Não encontramos esse nome");
+    expect(await screen.findByRole("alert")).toHaveTextContent("PIN incorreto.");
 
     await userEvent.click(screen.getByRole("button", { name: "Não, voltar" }));
     expect(screen.getByLabelText("Empresa")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Bruno Teste" }));
+    expect(screen.getByLabelText("PIN")).toHaveValue("");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("avisa o que é guardado, como pede a LGPD", () => {

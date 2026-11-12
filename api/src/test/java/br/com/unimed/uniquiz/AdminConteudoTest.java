@@ -191,7 +191,7 @@ class AdminConteudoTest extends TesteDeIntegracao {
         return pedir(
                         comJson(
                                 post("/api/admin/modulos/{id}/licoes", moduloId).cookie(admin),
-                                Map.of("titulo", titulo)),
+                                Map.of("titulo", titulo, "quantidades", Map.of("facil", 5, "medio", 0, "dificil", 0))),
                         status().isCreated())
                 .get("id")
                 .asLong();

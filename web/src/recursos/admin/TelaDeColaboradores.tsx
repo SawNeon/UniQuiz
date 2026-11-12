@@ -1,14 +1,25 @@
+import type { FormEvent } from "react";
 import { useState } from "react";
-import { useAjustarColaborador, useColaboradoresAdmin, useImportacao, useZerarPontos } from "../../api/admin";
+import {
+  useAjustarColaborador,
+  useCadastrarColaborador,
+  useColaboradoresAdmin,
+  useImportacao,
+  useRedefinirPin,
+  useZerarPontos,
+} from "../../api/admin";
+import { useEmpresas, useSetores } from "../../api/consultas";
 import type { ColaboradorParaAdmin, ResumoDaImportacao } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
+import { pinCompleto, pinDigitado, TAMANHO_DO_PIN } from "../acesso/pin";
 import { Campo, Entrada } from "./componentes";
 
 export function TelaDeColaboradores() {
   return (
     <div className="flex flex-col gap-10">
       <Importacao />
+      <Cadastro />
       <Busca />
     </div>
   );
@@ -76,6 +87,106 @@ function Importacao() {
   );
 }
 
+function Cadastro() {
+  const [nome, setNome] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [setor, setSetor] = useState("");
+  const [pin, setPin] = useState("");
+  const cadastrar = useCadastrarColaborador();
+  const empresas = useEmpresas();
+  const idDaEmpresa =
+    empresas.data?.find(
+      (item) => item.nome.toLocaleLowerCase("pt-BR") === empresa.trim().toLocaleLowerCase("pt-BR"),
+    )?.id ?? null;
+  const setores = useSetores(idDaEmpresa);
+  const pinValido = pin === "" || pinCompleto(pin);
+  const pronto = nome.trim() !== "" && empresa.trim() !== "" && setor.trim() !== "" && pinValido;
+
+  function enviar(evento: FormEvent) {
+    evento.preventDefault();
+    if (pronto) {
+      cadastrar.mutate(
+        { nome, empresa, setor, pin: pin || undefined },
+        {
+          onSuccess: () => {
+            setNome("");
+            setPin("");
+          },
+        },
+      );
+    }
+  }
+
+  return (
+    <section aria-labelledby="titulo-cadastro" className="flex flex-col gap-4">
+      <h2 id="titulo-cadastro" className="text-2xl font-extrabold">
+        Cadastrar um colaborador
+      </h2>
+      <p>
+        Para quem não está na planilha. Escolha uma empresa e um setor que já existem ou digite novos: eles
+        são criados junto. O PIN é opcional: se você informar, a pessoa já entra com ele; se deixar em branco,
+        ela cria o dela no primeiro acesso.
+      </p>
+      <form className="flex flex-col gap-3" onSubmit={enviar}>
+        <Campo rotulo="Nome do colaborador">
+          <Entrada value={nome} maxLength={200} onChange={(evento) => setNome(evento.target.value)} />
+        </Campo>
+        <Campo rotulo="Empresa do colaborador">
+          <Entrada
+            list="empresas-conhecidas"
+            value={empresa}
+            maxLength={150}
+            onChange={(evento) => setEmpresa(evento.target.value)}
+          />
+        </Campo>
+        <Campo rotulo="Setor do colaborador">
+          <Entrada
+            list="setores-conhecidos"
+            value={setor}
+            maxLength={150}
+            onChange={(evento) => setSetor(evento.target.value)}
+          />
+        </Campo>
+        <Campo
+          rotulo="PIN do colaborador (opcional)"
+          erro={pinValido ? undefined : `O PIN tem ${TAMANHO_DO_PIN} números.`}
+        >
+          <Entrada
+            type="password"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={TAMANHO_DO_PIN}
+            value={pin}
+            className="w-32"
+            onChange={(evento) => setPin(pinDigitado(evento.target.value))}
+          />
+        </Campo>
+        <datalist id="empresas-conhecidas">
+          {empresas.data?.map((item) => (
+            <option key={item.id} value={item.nome} />
+          ))}
+        </datalist>
+        <datalist id="setores-conhecidos">
+          {setores.data?.map((item) => (
+            <option key={item.id} value={item.nome} />
+          ))}
+        </datalist>
+        <div>
+          <Botao type="submit" disabled={!pronto || cadastrar.isPending}>
+            Cadastrar
+          </Botao>
+        </div>
+      </form>
+      {cadastrar.isError && <MensagemDeErro erro={cadastrar.error} />}
+      {cadastrar.isSuccess && (
+        <p role="status" className="font-bold">
+          {cadastrar.data.nome} cadastrado em {cadastrar.data.setor}.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function Busca() {
   const [busca, setBusca] = useState("");
   const colaboradores = useColaboradoresAdmin(busca);
@@ -106,6 +217,7 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
   const [nome, setNome] = useState(colaborador.nome);
   const ajustar = useAjustarColaborador();
   const zerar = useZerarPontos();
+  const redefinirPin = useRedefinirPin();
 
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-xl bg-neutro/60 p-3">
@@ -134,6 +246,18 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
       >
         Salvar nome
       </Botao>
+      <span className="text-sm font-bold">{colaborador.temPin ? "PIN criado" : "Sem PIN ainda"}</span>
+      <Botao
+        variante="discreto"
+        disabled={!colaborador.temPin}
+        onClick={() => {
+          if (window.confirm("Apagar o PIN de " + colaborador.nome + "? Ele cria outro no próximo acesso.")) {
+            redefinirPin.mutate(colaborador.id);
+          }
+        }}
+      >
+        Redefinir PIN
+      </Botao>
       <Botao
         variante="discreto"
         onClick={() => {
@@ -144,7 +268,10 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
       >
         Zerar pontos
       </Botao>
-      {(ajustar.error ?? zerar.error) && <MensagemDeErro erro={ajustar.error ?? zerar.error} />}
+      {(ajustar.error ?? zerar.error ?? redefinirPin.error) && (
+        <MensagemDeErro erro={ajustar.error ?? zerar.error ?? redefinirPin.error} />
+      )}
+      {redefinirPin.isSuccess && <span className="text-sm font-bold">PIN apagado.</span>}
       {zerar.isSuccess && <span className="text-sm font-bold">Pontos zerados.</span>}
     </li>
   );

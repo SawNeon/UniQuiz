@@ -1,5 +1,6 @@
 package br.com.unimed.uniquiz.conteudo.persistencia;
 
+import br.com.unimed.uniquiz.conteudo.dominio.QuantidadesPorNivel;
 import br.com.unimed.uniquiz.conteudo.dominio.StatusPublicacao;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,9 +12,6 @@ import jakarta.persistence.Id;
 @Entity
 public class Licao {
 
-    public static final int MINIMO_DE_DESAFIOS = 5;
-    public static final int MAXIMO_DE_DESAFIOS = 8;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,17 +19,31 @@ public class Licao {
     private Long moduloId;
     private String titulo;
     private int ordem;
+    private int qtdFacil;
+    private int qtdMedio;
+    private int qtdDificil;
 
     @Enumerated(EnumType.STRING)
     private StatusPublicacao status;
 
     protected Licao() {}
 
-    public Licao(Long moduloId, String titulo, int ordem) {
+    public Licao(Long moduloId, String titulo, int ordem, QuantidadesPorNivel quantidades) {
         this.moduloId = moduloId;
         this.ordem = ordem;
         this.status = StatusPublicacao.RASCUNHO;
         renomear(titulo);
+        definirQuantidades(quantidades);
+    }
+
+    public void definirQuantidades(QuantidadesPorNivel quantidades) {
+        this.qtdFacil = quantidades.facil();
+        this.qtdMedio = quantidades.medio();
+        this.qtdDificil = quantidades.dificil();
+    }
+
+    public QuantidadesPorNivel quantidades() {
+        return new QuantidadesPorNivel(qtdFacil, qtdMedio, qtdDificil);
     }
 
     public void renomear(String novoTitulo) {

@@ -1,9 +1,11 @@
 package br.com.unimed.uniquiz.conteudo.aplicacao;
 
 import br.com.unimed.uniquiz.conteudo.dominio.Dificuldade;
+import br.com.unimed.uniquiz.conteudo.dominio.QuantidadesPorNivel;
 import br.com.unimed.uniquiz.conteudo.dominio.StatusPublicacao;
 import br.com.unimed.uniquiz.conteudo.dominio.TipoDesafio;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +22,28 @@ public final class ConteudoParaAdmin {
             @Size(max = 500) String descricao,
             @Size(max = 20_000) String materialEstudo) {}
 
-    public record DadosDaLicao(@NotBlank @Size(max = 150) String titulo) {}
+    public record QuantidadesDaLicao(
+            @Min(0) @Max(QuantidadesPorNivel.MAXIMO_POR_NIVEL) int facil,
+            @Min(0) @Max(QuantidadesPorNivel.MAXIMO_POR_NIVEL) int medio,
+            @Min(0) @Max(QuantidadesPorNivel.MAXIMO_POR_NIVEL) int dificil) {
+
+        public QuantidadesPorNivel paraDominio() {
+            return new QuantidadesPorNivel(facil, medio, dificil);
+        }
+    }
+
+    public record DadosDaLicao(@NotBlank @Size(max = 150) String titulo, @Valid QuantidadesDaLicao quantidades) {
+
+        public boolean mudaQuantidades() {
+            return quantidades != null;
+        }
+
+        public QuantidadesPorNivel quantidadesOuNenhuma() {
+            return mudaQuantidades() ? quantidades.paraDominio() : QuantidadesPorNivel.NENHUMA;
+        }
+    }
+
+    public record ContagemPorNivel(long facil, long medio, long dificil) {}
 
     public record DadosDoDesafio(
             @NotNull TipoDesafio tipo,
@@ -45,7 +68,14 @@ public final class ConteudoParaAdmin {
             List<Licao> licoes) {}
 
     public record Licao(
-            Long id, Long moduloId, String titulo, int ordem, StatusPublicacao status, long desafiosPublicados) {}
+            Long id,
+            Long moduloId,
+            String titulo,
+            int ordem,
+            StatusPublicacao status,
+            long desafiosPublicados,
+            QuantidadesPorNivel quantidades,
+            ContagemPorNivel publicadosPorNivel) {}
 
     public record Desafio(
             Long id,

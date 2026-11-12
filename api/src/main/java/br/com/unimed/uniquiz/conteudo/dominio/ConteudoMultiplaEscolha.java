@@ -4,7 +4,10 @@ import static br.com.unimed.uniquiz.conteudo.dominio.Validacoes.exigir;
 import static br.com.unimed.uniquiz.conteudo.dominio.Validacoes.preenchido;
 
 import br.com.unimed.uniquiz.comum.ErroDeNegocio;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.random.RandomGenerator;
 
 public record ConteudoMultiplaEscolha(List<Alternativa> alternativas) implements ConteudoDesafio {
@@ -36,7 +39,9 @@ public record ConteudoMultiplaEscolha(List<Alternativa> alternativas) implements
 
     @Override
     public ConteudoPublico paraColaborador(RandomGenerator aleatorio) {
-        return new ConteudoPublico.MultiplaEscolha(alternativas.stream()
+        List<Alternativa> embaralhadas = new ArrayList<>(alternativas);
+        Collections.shuffle(embaralhadas, new Random(aleatorio.nextLong()));
+        return new ConteudoPublico.MultiplaEscolha(embaralhadas.stream()
                 .map(alternativa -> new ConteudoPublico.AlternativaPublica(alternativa.id(), alternativa.texto()))
                 .toList());
     }

@@ -5,6 +5,7 @@ spring:
     password: ${UNIQUIZ_DB_SENHA:}
   flyway:
     locations: classpath:db/migration,classpath:db/dev
+    out-of-order: true
 
 uniquiz:
   url-publica: http://localhost:5173

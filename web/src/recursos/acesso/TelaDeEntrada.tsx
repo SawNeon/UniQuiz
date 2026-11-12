@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useColaboradoresDoSetor, useEmpresas, useEntrar, useSetores } from "../../api/consultas";
-import type { ItemDaLista } from "../../api/tipos";
+import type { ColaboradorDaEntrada } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
 import { Mascote } from "../../mascote/Mascote";
+import { pinCompleto, pinDigitado, TAMANHO_DO_PIN } from "./pin";
 
 function semAcento(texto: string): string {
   return texto.normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("pt-BR");
@@ -15,7 +16,8 @@ export function TelaDeEntrada() {
   const [empresaId, setEmpresaId] = useState<number | null>(null);
   const [setorId, setSetorId] = useState<number | null>(null);
   const [busca, setBusca] = useState("");
-  const [escolhido, setEscolhido] = useState<ItemDaLista | null>(null);
+  const [escolhido, setEscolhido] = useState<ColaboradorDaEntrada | null>(null);
+  const [pin, setPin] = useState("");
 
   const empresas = useEmpresas();
   const setores = useSetores(empresaId);
@@ -30,10 +32,19 @@ export function TelaDeEntrada() {
   const nomeDoSetor = setores.data?.find((setor) => setor.id === setorId)?.nome;
 
   function confirmar() {
-    if (!escolhido) {
+    if (!escolhido || !pinCompleto(pin)) {
       return;
     }
-    entrar.mutate(escolhido.id, { onSuccess: () => void navegar("/", { replace: true }) });
+    entrar.mutate(
+      { colaboradorId: escolhido.id, pin },
+      { onSuccess: () => void navegar("/", { replace: true }) },
+    );
+  }
+
+  function voltar() {
+    setEscolhido(null);
+    setPin("");
+    entrar.reset();
   }
 
   return (
@@ -47,22 +58,45 @@ export function TelaDeEntrada() {
       </header>
 
       {escolhido ? (
-        <section
+        <form
           aria-labelledby="titulo-confirmacao"
           className="flex flex-col gap-4 rounded-padrao bg-acerto-suave p-5"
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            confirmar();
+          }}
         >
           <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
             Você é {escolhido.nome}, do setor {nomeDoSetor}?
           </h2>
-          <p>O acesso é pessoal. Entre só com o seu nome.</p>
+          <p>
+            {escolhido.temPin
+              ? "Digite o seu PIN de 3 números."
+              : "É o seu primeiro acesso. Crie um PIN de 3 números e guarde: você vai usar nas próximas vezes."}
+          </p>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="pin" className="text-lg font-extrabold">
+              {escolhido.temPin ? "PIN" : "Crie o seu PIN"}
+            </label>
+            <input
+              id="pin"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={TAMANHO_DO_PIN}
+              value={pin}
+              onChange={(evento) => setPin(pinDigitado(evento.target.value))}
+              className="min-h-12 w-32 rounded-padrao border-2 border-neutro bg-white px-3 text-center text-2xl tracking-[0.5em]"
+            />
+          </div>
           {entrar.isError && <MensagemDeErro erro={entrar.error} />}
-          <Botao larguraTotal onClick={confirmar} disabled={entrar.isPending}>
+          <Botao larguraTotal type="submit" disabled={entrar.isPending || !pinCompleto(pin)}>
             Sim, sou eu
           </Botao>
-          <Botao variante="secundario" larguraTotal onClick={() => setEscolhido(null)}>
+          <Botao variante="secundario" larguraTotal type="button" onClick={voltar}>
             Não, voltar
           </Botao>
-        </section>
+        </form>
       ) : (
         <form className="flex flex-col gap-5" onSubmit={(evento) => evento.preventDefault()}>
           <div className="flex flex-col gap-2">

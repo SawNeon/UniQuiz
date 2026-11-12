@@ -6,6 +6,8 @@ import br.com.unimed.uniquiz.conteudo.aplicacao.ConteudoParaAdmin.DadosDaLicao;
 import br.com.unimed.uniquiz.conteudo.aplicacao.ConteudoParaAdmin.DadosDoDesafio;
 import br.com.unimed.uniquiz.conteudo.aplicacao.ConteudoParaAdmin.DadosDoModulo;
 import br.com.unimed.uniquiz.conteudo.dominio.ConteudoDesafio;
+import br.com.unimed.uniquiz.conteudo.dominio.Dificuldade;
+import br.com.unimed.uniquiz.conteudo.dominio.QuantidadesPorNivel;
 import br.com.unimed.uniquiz.conteudo.dominio.StatusPublicacao;
 import br.com.unimed.uniquiz.conteudo.persistencia.Desafio;
 import br.com.unimed.uniquiz.conteudo.persistencia.DesafioRepository;
@@ -76,28 +78,59 @@ public class ServicoDeConteudoAdmin {
     @Transactional
     public ConteudoParaAdmin.Licao criarLicao(Long moduloId, DadosDaLicao dados) {
         modulo(moduloId);
-        Licao licao = licoes.save(new Licao(moduloId, dados.titulo(), licoes.maiorOrdem(moduloId) + 1));
+        Licao licao = licoes.save(
+                new Licao(moduloId, dados.titulo(), licoes.maiorOrdem(moduloId) + 1, dados.quantidadesOuNenhuma()));
         return paraAdmin(licao);
     }
 
     @Transactional
-    public ConteudoParaAdmin.Licao renomearLicao(Long licaoId, DadosDaLicao dados) {
+    public ConteudoParaAdmin.Licao atualizarLicao(Long licaoId, DadosDaLicao dados) {
         Licao licao = licao(licaoId);
+        if (dados.mudaQuantidades()) {
+            definirQuantidades(licao, dados.quantidadesOuNenhuma());
+        }
         licao.renomear(dados.titulo());
         return paraAdmin(licao);
+    }
+
+    private void definirQuantidades(Licao licao, QuantidadesPorNivel quantidades) {
+        if (licao.publicada()) {
+            exigirBancoSuficiente(licao.getId(), quantidades);
+        }
+        licao.definirQuantidades(quantidades);
     }
 
     @Transactional
     public void mudarStatusDaLicao(Long licaoId, StatusPublicacao status) {
         Licao licao = licao(licaoId);
         if (status == StatusPublicacao.PUBLICADO) {
-            long publicados = desafios.countByLicaoIdAndStatus(licaoId, StatusPublicacao.PUBLICADO);
-            if (publicados < Licao.MINIMO_DE_DESAFIOS || publicados > Licao.MAXIMO_DE_DESAFIOS) {
-                throw new ErroDeNegocio("Uma lição publicada precisa ter de %d a %d desafios publicados. Esta tem %d."
-                        .formatted(Licao.MINIMO_DE_DESAFIOS, Licao.MAXIMO_DE_DESAFIOS, publicados));
-            }
+            exigirBancoSuficiente(licaoId, licao.quantidades());
         }
         licao.mudarStatus(status);
+    }
+
+    private void exigirBancoSuficiente(Long licaoId, QuantidadesPorNivel quantidades) {
+        if (quantidades.total() == 0) {
+            throw new ErroDeNegocio(
+                    "Defina quantos desafios cada pessoa responde, ao menos 1, antes de publicar a lição.");
+        }
+        for (Dificuldade nivel : Dificuldade.values()) {
+            long publicados =
+                    desafios.countByLicaoIdAndStatusAndDificuldade(licaoId, StatusPublicacao.PUBLICADO, nivel);
+            if (publicados < quantidades.de(nivel)) {
+                throw new ErroDeNegocio(
+                        "Faltam desafios no nível %s: a lição sorteia %d por pessoa e o banco publicado tem %d. Publique mais desafios desse nível ou diminua a quantidade."
+                                .formatted(rotulo(nivel), quantidades.de(nivel), publicados));
+            }
+        }
+    }
+
+    private static String rotulo(Dificuldade nivel) {
+        return switch (nivel) {
+            case FACIL -> "fácil";
+            case MEDIO -> "médio";
+            case DIFICIL -> "difícil";
+        };
     }
 
     @Transactional
@@ -129,7 +162,25 @@ public class ServicoDeConteudoAdmin {
 
     @Transactional
     public void mudarStatusDoDesafio(Long desafioId, StatusPublicacao status) {
-        desafio(desafioId).mudarStatus(status);
+        Desafio desafio = desafio(desafioId);
+        if (desafio.saiDoBancoAoMudarPara(status)) {
+            exigirQueOBancoAguenteSaidaDe(desafio);
+        }
+        desafio.mudarStatus(status);
+    }
+
+    private void exigirQueOBancoAguenteSaidaDe(Desafio desafio) {
+        Licao licao = licao(desafio.getLicaoId());
+        if (!licao.publicada()) {
+            return;
+        }
+        long restantes = publicadosDoNivel(licao, desafio.getDificuldade()) - 1;
+        int sorteados = licao.quantidades().de(desafio.getDificuldade());
+        if (restantes < sorteados) {
+            throw new ErroDeNegocio(
+                    "A lição publicada sorteia %d desafios do nível %s e, sem este, o banco ficaria com %d. Publique outro desafio desse nível antes, ou diminua a quantidade da lição."
+                            .formatted(sorteados, rotulo(desafio.getDificuldade()), restantes));
+        }
     }
 
     @Transactional
@@ -188,7 +239,16 @@ public class ServicoDeConteudoAdmin {
                 licao.getTitulo(),
                 licao.getOrdem(),
                 licao.getStatus(),
-                desafios.countByLicaoIdAndStatus(licao.getId(), StatusPublicacao.PUBLICADO));
+                desafios.countByLicaoIdAndStatus(licao.getId(), StatusPublicacao.PUBLICADO),
+                licao.quantidades(),
+                new ConteudoParaAdmin.ContagemPorNivel(
+                        publicadosDoNivel(licao, Dificuldade.FACIL),
+                        publicadosDoNivel(licao, Dificuldade.MEDIO),
+                        publicadosDoNivel(licao, Dificuldade.DIFICIL)));
+    }
+
+    private long publicadosDoNivel(Licao licao, Dificuldade nivel) {
+        return desafios.countByLicaoIdAndStatusAndDificuldade(licao.getId(), StatusPublicacao.PUBLICADO, nivel);
     }
 
     private ConteudoParaAdmin.Desafio paraAdmin(Desafio desafio) {

@@ -8,6 +8,10 @@ export interface ItemDaLista {
   nome: string;
 }
 
+export interface ColaboradorDaEntrada extends ItemDaLista {
+  temPin: boolean;
+}
+
 export interface Trofeu {
   codigo: string;
   nome: string;
@@ -163,6 +167,12 @@ export interface ValidacaoDeCertificado {
   emitidoEm: string;
 }
 
+export interface PorNivel {
+  facil: number;
+  medio: number;
+  dificil: number;
+}
+
 export interface LicaoParaAdmin {
   id: number;
   moduloId: number;
@@ -170,6 +180,8 @@ export interface LicaoParaAdmin {
   ordem: number;
   status: StatusPublicacao;
   desafiosPublicados: number;
+  quantidades: PorNivel;
+  publicadosPorNivel: PorNivel;
 }
 
 export interface ModuloParaAdmin {
@@ -241,6 +253,7 @@ export interface ColaboradorParaAdmin {
   setor: string;
   empresa: string;
   ativo: boolean;
+  temPin: boolean;
 }
 
 export interface ResumoDaImportacao {

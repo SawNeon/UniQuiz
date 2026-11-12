@@ -3,6 +3,7 @@ package br.com.unimed.uniquiz.acesso.aplicacao;
 import br.com.unimed.uniquiz.acesso.persistencia.Sessao;
 import br.com.unimed.uniquiz.acesso.persistencia.SessaoRepository;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores;
+import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDePin;
 import br.com.unimed.uniquiz.comum.ErroDeNegocio;
 import br.com.unimed.uniquiz.comum.PropriedadesDoUniQuiz;
 import java.time.Clock;
@@ -20,16 +21,19 @@ public class ServicoDeSessao {
 
     private final SessaoRepository sessoes;
     private final ServicoDeColaboradores colaboradores;
+    private final ServicoDePin pins;
     private final Duration duracaoSessaoColaborador;
     private final Clock relogio;
 
     public ServicoDeSessao(
             SessaoRepository sessoes,
             ServicoDeColaboradores colaboradores,
+            ServicoDePin pins,
             PropriedadesDoUniQuiz propriedades,
             Clock relogio) {
         this.sessoes = sessoes;
         this.colaboradores = colaboradores;
+        this.pins = pins;
         this.duracaoSessaoColaborador = propriedades.sessao().duracao();
         this.relogio = relogio;
     }
@@ -42,11 +46,9 @@ public class ServicoDeSessao {
         return DURACAO_SESSAO_ADMIN;
     }
 
-    @Transactional
-    public String entrarComoColaborador(Long colaboradorId) {
-        if (!colaboradores.estaAtivo(colaboradorId)) {
-            throw new ErroDeNegocio("Não encontramos esse nome entre os colaboradores ativos.");
-        }
+    @Transactional(noRollbackFor = ErroDeNegocio.class)
+    public String entrarComoColaborador(Long colaboradorId, String pin) {
+        pins.verificarOuCriar(colaboradorId, pin);
         String token = Tokens.novo();
         Instant agora = relogio.instant();
         sessoes.save(

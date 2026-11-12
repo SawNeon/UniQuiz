@@ -36,6 +36,7 @@ import org.testcontainers.containers.MSSQLServerContainer;
 @EnabledIf(value = "dockerDisponivel", disabledReason = "Precisa do Docker para subir o SQL Server")
 public abstract class TesteDeIntegracao {
 
+    static final String PIN_DE_TESTE = "123";
     static final String SENHA_DO_ADMIN = "senha-de-teste-longa";
     static final String LICAO_DE_LGPD = "O básico da LGPD";
     static final String LICAO_DE_IA = "IA no trabalho";
@@ -74,6 +75,7 @@ public abstract class TesteDeIntegracao {
                 DELETE FROM resposta;
                 DELETE FROM evento_pontos;
                 DELETE FROM certificado;
+                DELETE FROM desafio_da_tentativa;
                 DELETE FROM tentativa;
                 DELETE FROM colaborador_trofeu;
                 DELETE FROM sequencia_diaria;
@@ -84,11 +86,18 @@ public abstract class TesteDeIntegracao {
                 DELETE FROM licao WHERE modulo_id IN (
                     SELECT id FROM modulo WHERE titulo NOT IN (N'LGPD na prática', N'IA com responsabilidade'));
                 DELETE FROM modulo WHERE titulo NOT IN (N'LGPD na prática', N'IA com responsabilidade');
+                UPDATE licao SET
+                    qtd_facil = (SELECT COUNT(*) FROM desafio d WHERE d.licao_id = licao.id
+                                 AND d.status = 'PUBLICADO' AND d.dificuldade = 'FACIL'),
+                    qtd_medio = (SELECT COUNT(*) FROM desafio d WHERE d.licao_id = licao.id
+                                 AND d.status = 'PUBLICADO' AND d.dificuldade = 'MEDIO'),
+                    qtd_dificil = (SELECT COUNT(*) FROM desafio d WHERE d.licao_id = licao.id
+                                   AND d.status = 'PUBLICADO' AND d.dificuldade = 'DIFICIL');
                 DELETE FROM colaborador WHERE id NOT IN (
                     SELECT MIN(id) FROM colaborador
                     WHERE nome IN (N'Ana Exemplo', N'Bruno Teste', N'Carla Demonstração')
                     GROUP BY nome);
-                UPDATE colaborador SET ativo = 1;
+                UPDATE colaborador SET ativo = 1, pin_hash = NULL, tentativas_falhas_pin = 0, pin_bloqueado_ate = NULL;
                 DELETE FROM setor WHERE id NOT IN (SELECT setor_id FROM colaborador);
                 DELETE FROM empresa WHERE id NOT IN (SELECT empresa_id FROM colaborador);
                 DELETE FROM temporada WHERE nome <> N'Temporada de exemplo';
@@ -109,9 +118,8 @@ public abstract class TesteDeIntegracao {
     }
 
     protected Cookie entrarComo(String nome) throws Exception {
-        return mvc.perform(post("/api/sessao")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"colaboradorId\":" + idDoColaborador(nome) + "}"))
+        return mvc.perform(comJson(
+                        post("/api/sessao"), Map.of("colaboradorId", idDoColaborador(nome), "pin", PIN_DE_TESTE)))
                 .andExpect(status().isNoContent())
                 .andReturn()
                 .getResponse()
@@ -176,9 +184,11 @@ public abstract class TesteDeIntegracao {
 
     protected JsonNode fazerLicao(Cookie sessao, String tituloDaLicao, boolean acertarTudo) throws Exception {
         Map<Long, Object> respostas = gabarito(tituloDaLicao, acertarTudo);
-        long tentativaId = iniciar(sessao, tituloDaLicao).get("tentativaId").asLong();
-        for (Map.Entry<Long, Object> resposta : respostas.entrySet()) {
-            responder(sessao, tentativaId, resposta.getKey(), resposta.getValue(), status().isOk());
+        JsonNode tentativa = iniciar(sessao, tituloDaLicao);
+        long tentativaId = tentativa.get("tentativaId").asLong();
+        for (JsonNode sorteado : tentativa.get("desafios")) {
+            long desafioId = sorteado.get("id").asLong();
+            responder(sessao, tentativaId, desafioId, respostas.get(desafioId), status().isOk());
         }
         return concluir(sessao, tentativaId);
     }

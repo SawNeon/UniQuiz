@@ -26,6 +26,8 @@ const modulos: ModuloParaAdmin[] = [
         ordem: 1,
         status: "PUBLICADO",
         desafiosPublicados: 5,
+        quantidades: { facil: 2, medio: 2, dificil: 1 },
+        publicadosPorNivel: { facil: 3, medio: 2, dificil: 0 },
       },
     ],
   },
@@ -132,8 +134,109 @@ describe("TelaDeConteudo", () => {
     expect(chamadas).toContainEqual({
       metodo: "POST",
       caminho: "/admin/modulos/2/licoes",
-      corpo: { titulo: "IA no trabalho" },
+      corpo: { titulo: "IA no trabalho", quantidades: { facil: 2, medio: 2, dificil: 1 } },
     });
+  });
+
+  it("cria a lição com as quantidades por nível que o admin escolher", async () => {
+    const chamadas = simularApi({
+      "GET /admin/modulos": { corpo: modulos },
+      "POST /admin/modulos/2/licoes": { status: 201, corpo: {} },
+    });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "IA com responsabilidade" }));
+
+    await userEvent.type(
+      modulo.getByLabelText("Título da nova lição em IA com responsabilidade"),
+      "Phishing",
+    );
+    fireEvent.change(modulo.getByLabelText("Fáceis por pessoa na nova lição"), { target: { value: "5" } });
+    fireEvent.change(modulo.getByLabelText("Médios por pessoa na nova lição"), { target: { value: "5" } });
+    fireEvent.change(modulo.getByLabelText("Difíceis por pessoa na nova lição"), { target: { value: "5" } });
+    expect(modulo.getByText("15")).toBeInTheDocument();
+    await userEvent.click(modulo.getByRole("button", { name: "Adicionar lição" }));
+
+    await vi.waitFor(() =>
+      expect(chamadas).toContainEqual({
+        metodo: "POST",
+        caminho: "/admin/modulos/2/licoes",
+        corpo: { titulo: "Phishing", quantidades: { facil: 5, medio: 5, dificil: 5 } },
+      }),
+    );
+  });
+
+  it("limita a quantidade de 0 ao máximo por nível", async () => {
+    simularApi({ "GET /admin/modulos": { corpo: modulos } });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "IA com responsabilidade" }));
+
+    fireEvent.change(modulo.getByLabelText("Fáceis por pessoa na nova lição"), { target: { value: "99" } });
+    fireEvent.change(modulo.getByLabelText("Médios por pessoa na nova lição"), { target: { value: "-4" } });
+    fireEvent.change(modulo.getByLabelText("Difíceis por pessoa na nova lição"), { target: { value: "" } });
+
+    expect(modulo.getByLabelText("Fáceis por pessoa na nova lição")).toHaveValue(30);
+    expect(modulo.getByLabelText("Médios por pessoa na nova lição")).toHaveValue(0);
+    expect(modulo.getByLabelText("Difíceis por pessoa na nova lição")).toHaveValue(0);
+  });
+
+  it("mostra o banco de cada nível e avisa quando falta desafio para o sorteio", async () => {
+    simularApi({ "GET /admin/modulos": { corpo: modulos } });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "LGPD na prática" }));
+
+    expect(modulo.getByText("Banco: 3 publicados")).toBeInTheDocument();
+    expect(modulo.getByText("Banco: 2 publicados")).toBeInTheDocument();
+    expect(modulo.getByText("Banco: 0 publicados (faltam desafios)")).toBeInTheDocument();
+  });
+
+  it("ajusta o sorteio de uma lição que já existe ao sair do campo", async () => {
+    const chamadas = simularApi({
+      "GET /admin/modulos": { corpo: modulos },
+      "PUT /admin/licoes/5": { corpo: {} },
+    });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "LGPD na prática" }));
+
+    const faceis = modulo.getByLabelText("Fáceis por pessoa em O básico da LGPD");
+    fireEvent.change(faceis, { target: { value: "3" } });
+    fireEvent.blur(faceis);
+
+    await vi.waitFor(() =>
+      expect(chamadas).toContainEqual({
+        metodo: "PUT",
+        caminho: "/admin/licoes/5",
+        corpo: { titulo: "O básico da LGPD", quantidades: { facil: 3, medio: 2, dificil: 1 } },
+      }),
+    );
+  });
+
+  it("não salva quando o campo não mudou", async () => {
+    const chamadas = simularApi({ "GET /admin/modulos": { corpo: modulos } });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "LGPD na prática" }));
+
+    fireEvent.blur(modulo.getByLabelText("Fáceis por pessoa em O básico da LGPD"));
+
+    expect(chamadas.filter((chamada) => chamada.metodo === "PUT")).toHaveLength(0);
+  });
+
+  it("mostra a recusa do servidor e volta ao valor anterior", async () => {
+    simularApi({
+      "GET /admin/modulos": { corpo: modulos },
+      "PUT /admin/licoes/5": {
+        status: 422,
+        corpo: { detail: "Faltam desafios no nível difícil." },
+      },
+    });
+    renderizar(<TelaDeConteudo />, { rota: "/admin", caminho: "/admin" });
+    const modulo = within(await screen.findByRole("region", { name: "LGPD na prática" }));
+
+    const dificeis = modulo.getByLabelText("Difíceis por pessoa em O básico da LGPD");
+    fireEvent.change(dificeis, { target: { value: "4" } });
+    fireEvent.blur(dificeis);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Faltam desafios no nível difícil.");
+    expect(modulo.getByLabelText("Difíceis por pessoa em O básico da LGPD")).toHaveValue(1);
   });
 
   it("cria módulo com material de estudo e mostra a pré-visualização", async () => {
@@ -335,7 +438,11 @@ describe("TelaDaLicaoAdmin", () => {
     renderizar(<TelaDaLicaoAdmin />, { rota: "/admin/licoes/5", caminho: "/admin/licoes/:licaoId" });
 
     expect(await screen.findByRole("heading", { name: "O básico da LGPD" })).toBeInTheDocument();
-    expect(screen.getByText("Verdadeiro ou falso · 10 pontos · versão 1")).toBeInTheDocument();
+    expect(screen.getByText("Verdadeiro ou falso · Fácil · 10 pontos · versão 1")).toBeInTheDocument();
+    const sorteio = within(await screen.findByRole("list", { name: "Sorteio da lição" }));
+    expect(sorteio.getByText("Fáceis: sorteia 2 de 3 publicados")).toBeInTheDocument();
+    expect(sorteio.getByText("Médios: sorteia 2 de 2 publicados")).toBeInTheDocument();
+    expect(sorteio.getByText("Difíceis: sorteia 1 de 0 publicados (faltam desafios)")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Duplicar" }));
 
     await vi.waitFor(() =>
@@ -411,9 +518,12 @@ describe("TelaDeColaboradores", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const chamadas = simularApi({
       "GET /admin/colaboradores?busca=": {
-        corpo: [{ id: 4, nome: "Bruno Teste", setor: "TI", empresa: "Unimed Exemplo", ativo: true }],
+        corpo: [
+          { id: 4, nome: "Bruno Teste", setor: "TI", empresa: "Unimed Exemplo", ativo: true, temPin: true },
+        ],
       },
       "PATCH /admin/colaboradores/4": {},
+      "POST /admin/colaboradores/4/redefinir-pin": {},
       "POST /admin/colaboradores/4/zerar-pontos": {},
     });
     renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
@@ -426,6 +536,14 @@ describe("TelaDeColaboradores", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zerar pontos" }));
 
     expect(await screen.findByText("Pontos zerados.")).toBeInTheDocument();
+    expect(screen.getByText("PIN criado")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Redefinir PIN" }));
+    expect(await screen.findByText("PIN apagado.")).toBeInTheDocument();
+    expect(chamadas).toContainEqual({
+      metodo: "POST",
+      caminho: "/admin/colaboradores/4/redefinir-pin",
+      corpo: undefined,
+    });
     expect(chamadas).toContainEqual({
       metodo: "PATCH",
       caminho: "/admin/colaboradores/4",
@@ -468,5 +586,121 @@ describe("TelaDeTemporadas", () => {
         corpo: { nome: "Dezembro de 2026", inicio: "2026-12-01", fim: "2026-12-31", premioTexto: "" },
       }),
     );
+  });
+
+  it("cadastra um colaborador avulso e mostra o erro de nome repetido", async () => {
+    let tentativa = 0;
+    const chamadas = simularApi({
+      "GET /admin/colaboradores?busca=": { corpo: [] },
+      "GET /empresas": { corpo: [{ id: 1, nome: "Unimed Exemplo" }] },
+      "GET /empresas/1/setores": { corpo: [{ id: 2, nome: "TI" }] },
+      "POST /admin/colaboradores": () => {
+        tentativa += 1;
+        return tentativa === 1
+          ? {
+              status: 201,
+              corpo: {
+                id: 9,
+                nome: "Diego Novo",
+                setor: "Financeiro",
+                empresa: "Unimed Exemplo",
+                ativo: true,
+                temPin: false,
+              },
+            }
+          : { status: 422, corpo: { detail: "Já existe uma pessoa com esse nome nesse setor." } };
+      },
+    });
+    renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
+
+    const cadastrar = screen.getByRole("button", { name: "Cadastrar" });
+    expect(cadastrar).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Nome do colaborador"), "Diego Novo");
+    await userEvent.type(screen.getByLabelText("Empresa do colaborador"), "unimed exemplo");
+    await userEvent.type(screen.getByLabelText("Setor do colaborador"), "Financeiro");
+    await userEvent.click(cadastrar);
+
+    expect(await screen.findByText("Diego Novo cadastrado em Financeiro.")).toBeInTheDocument();
+    expect(chamadas).toContainEqual({
+      metodo: "POST",
+      caminho: "/admin/colaboradores",
+      corpo: { nome: "Diego Novo", empresa: "unimed exemplo", setor: "Financeiro" },
+    });
+
+    await userEvent.type(screen.getByLabelText("Nome do colaborador"), "Diego Novo");
+    await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Já existe uma pessoa com esse nome");
+  });
+
+  describe("PIN no cadastro", () => {
+    const respostaDoCadastro = {
+      status: 201,
+      corpo: { id: 9, nome: "Diego Novo", setor: "TI", empresa: "Unimed Exemplo", ativo: true, temPin: true },
+    };
+
+    async function preencherDadosDaPessoa() {
+      await userEvent.type(screen.getByLabelText("Nome do colaborador"), "Diego Novo");
+      await userEvent.type(screen.getByLabelText("Empresa do colaborador"), "Unimed Exemplo");
+      await userEvent.type(screen.getByLabelText("Setor do colaborador"), "TI");
+    }
+
+    function simularCadastro() {
+      return simularApi({
+        "GET /admin/colaboradores?busca=": { corpo: [] },
+        "GET /empresas": { corpo: [{ id: 1, nome: "Unimed Exemplo" }] },
+        "GET /empresas/1/setores": { corpo: [{ id: 2, nome: "TI" }] },
+        "POST /admin/colaboradores": respostaDoCadastro,
+      });
+    }
+
+    it("envia o PIN junto e limpa o campo depois de cadastrar", async () => {
+      const chamadas = simularCadastro();
+      renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
+
+      await preencherDadosDaPessoa();
+      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "482");
+      await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
+
+      expect(await screen.findByText("Diego Novo cadastrado em TI.")).toBeInTheDocument();
+      expect(chamadas).toContainEqual({
+        metodo: "POST",
+        caminho: "/admin/colaboradores",
+        corpo: { nome: "Diego Novo", empresa: "Unimed Exemplo", setor: "TI", pin: "482" },
+      });
+      expect(screen.getByLabelText("PIN do colaborador (opcional)")).toHaveValue("");
+    });
+
+    it("aceita só números e no máximo 3", async () => {
+      simularCadastro();
+      renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
+
+      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "a1b2c3d4");
+
+      expect(screen.getByLabelText("PIN do colaborador (opcional)")).toHaveValue("123");
+    });
+
+    it("não deixa cadastrar com o PIN incompleto e explica o motivo", async () => {
+      const chamadas = simularCadastro();
+      renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
+
+      await preencherDadosDaPessoa();
+      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "48");
+
+      expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+      expect(screen.getByRole("alert")).toHaveTextContent("O PIN tem 3 números.");
+      expect(chamadas.filter((chamada) => chamada.metodo === "POST")).toHaveLength(0);
+    });
+
+    it("sem PIN o cadastro segue como antes e não manda o campo", async () => {
+      const chamadas = simularCadastro();
+      renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
+
+      await preencherDadosDaPessoa();
+      await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
+
+      await screen.findByText("Diego Novo cadastrado em TI.");
+      const envio = chamadas.find((chamada) => chamada.metodo === "POST");
+      expect(envio?.corpo).toEqual({ nome: "Diego Novo", empresa: "Unimed Exemplo", setor: "TI" });
+    });
   });
 });
