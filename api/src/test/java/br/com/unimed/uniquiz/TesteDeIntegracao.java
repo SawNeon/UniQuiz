@@ -29,6 +29,7 @@ import org.testcontainers.containers.MSSQLServerContainer;
             "spring.flyway.locations=classpath:db/migration,classpath:db/dev",
             "uniquiz.admin-inicial.usuario=admin",
             "uniquiz.admin-inicial.senha=" + TesteDeIntegracao.SENHA_DO_ADMIN,
+            "uniquiz.admin-inicial.exigir-troca-de-senha=false",
             "uniquiz.limite-requisicoes.geral-por-minuto=100000",
             "uniquiz.limite-requisicoes.login-admin-por-minuto=100000"
         })
@@ -101,7 +102,10 @@ public abstract class TesteDeIntegracao {
                 DELETE FROM setor WHERE id NOT IN (SELECT setor_id FROM colaborador);
                 DELETE FROM empresa WHERE id NOT IN (SELECT empresa_id FROM colaborador);
                 DELETE FROM temporada WHERE nome <> N'Temporada de exemplo';
-                UPDATE administrador SET tentativas_falhas = 0, bloqueado_ate = NULL;
+                DELETE FROM administrador_setor;
+                DELETE FROM administrador WHERE usuario <> 'admin';
+                UPDATE administrador SET tentativas_falhas = 0, bloqueado_ate = NULL, ativo = 1,
+                    perfil = 'ADMINISTRADOR', precisa_trocar_senha = 0;
                 """);
     }
 

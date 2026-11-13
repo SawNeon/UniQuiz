@@ -10,8 +10,10 @@ import br.com.unimed.uniquiz.comum.ErroDeNegocio;
 import br.com.unimed.uniquiz.comum.RecursoNaoEncontrado;
 import br.com.unimed.uniquiz.comum.Textos;
 import java.time.Clock;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,6 +62,22 @@ public class ServicoDeColaboradores {
         return setores.findByEmpresaIdOrderByNomeAsc(empresaId).stream()
                 .map(setor -> new ItemDaLista(setor.getId(), setor.getNome()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ItemDaLista> setoresComEmpresa() {
+        Map<Long, String> nomesDasEmpresas =
+                empresas.findAll().stream().collect(Collectors.toMap(Empresa::getId, Empresa::getNome));
+        return setores.findAll().stream()
+                .map(setor -> new ItemDaLista(
+                        setor.getId(), nomesDasEmpresas.get(setor.getEmpresaId()) + " · " + setor.getNome()))
+                .sorted(Comparator.comparing(ItemDaLista::nome, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean setoresExistem(Set<Long> setorIds) {
+        return setores.findAllById(setorIds).size() == setorIds.size();
     }
 
     @Transactional(readOnly = true)

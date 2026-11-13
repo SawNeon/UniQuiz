@@ -14,7 +14,7 @@ public record PropriedadesDoUniQuiz(
 
     public record Sessao(Duration duracao, boolean cookieSeguro) {}
 
-    public record AdminInicial(String usuario, String senha) {}
+    public record AdminInicial(String usuario, String senha, boolean exigirTrocaDeSenha) {}
 
     public record Pontuacao(
             double multiplicadorFacil,

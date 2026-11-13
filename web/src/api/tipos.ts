@@ -265,3 +265,48 @@ export interface ResumoDaImportacao {
   homonimos: string[];
   podeConfirmar: boolean;
 }
+
+export type Permissao =
+  | "GERIR_CONTEUDO"
+  | "GERIR_COLABORADORES"
+  | "GERIR_TEMPORADAS"
+  | "GERIR_USUARIOS_DO_PAINEL"
+  | "VER_RELATORIOS"
+  | "EXPORTAR_RELATORIOS"
+  | "VER_AUDITORIA";
+
+export type PerfilDoPainel = "ADMINISTRADOR" | "GESTOR" | "AUDITOR";
+
+export interface ContaLogada {
+  id: number;
+  nome: string;
+  usuario: string;
+  perfil: PerfilDoPainel;
+  permissoes: Permissao[];
+  precisaTrocarSenha: boolean;
+}
+
+export interface UsuarioDoPainel {
+  id: number;
+  nome: string;
+  usuario: string;
+  perfil: PerfilDoPainel;
+  setores: number[];
+  ativo: boolean;
+  bloqueado: boolean;
+  precisaTrocarSenha: boolean;
+  criadoEm: string;
+  ultimoAcessoEm?: string | null;
+}
+
+export interface DadosDoUsuarioDoPainel {
+  nome: string;
+  perfil: PerfilDoPainel;
+  setores: number[];
+}
+
+export interface SenhaProvisoria {
+  usuarioId: number;
+  usuario: string;
+  senha: string;
+}

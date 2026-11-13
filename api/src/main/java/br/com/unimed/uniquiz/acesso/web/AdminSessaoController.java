@@ -2,6 +2,8 @@ package br.com.unimed.uniquiz.acesso.web;
 
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeLoginAdmin;
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeSessao;
+import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel;
+import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel.ContaLogada;
 import br.com.unimed.uniquiz.acesso.aplicacao.UsuarioLogado;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,15 +25,19 @@ class AdminSessaoController {
 
     record PedidoDeLogin(@NotBlank @Size(max = 60) String usuario, @NotBlank @Size(max = 200) String senha) {}
 
-    record AdministradorLogado(Long id) {}
-
     private final ServicoDeLoginAdmin login;
     private final ServicoDeSessao sessoes;
+    private final ServicoDeUsuariosDoPainel usuarios;
     private final CookiesDeSessao cookies;
 
-    AdminSessaoController(ServicoDeLoginAdmin login, ServicoDeSessao sessoes, CookiesDeSessao cookies) {
+    AdminSessaoController(
+            ServicoDeLoginAdmin login,
+            ServicoDeSessao sessoes,
+            ServicoDeUsuariosDoPainel usuarios,
+            CookiesDeSessao cookies) {
         this.login = login;
         this.sessoes = sessoes;
+        this.usuarios = usuarios;
         this.cookies = cookies;
     }
 
@@ -47,8 +53,8 @@ class AdminSessaoController {
     }
 
     @GetMapping("/eu")
-    AdministradorLogado eu(@AuthenticationPrincipal UsuarioLogado usuario) {
-        return new AdministradorLogado(usuario.id());
+    ContaLogada eu(@AuthenticationPrincipal UsuarioLogado usuario) {
+        return usuarios.conta(usuario.id());
     }
 
     @DeleteMapping("/sessao")

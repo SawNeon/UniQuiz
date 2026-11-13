@@ -14,3 +14,4 @@ uniquiz:
   admin-inicial:
     usuario: ${UNIQUIZ_ADMIN_USUARIO:admin}
     senha: ${UNIQUIZ_ADMIN_SENHA:}
+    exigir-troca-de-senha: false

@@ -50,7 +50,7 @@ public class ServicoDeLoginAdmin {
             administrador.registrarFalha(agora);
             throw new ErroDeNegocio(CREDENCIAIS_INVALIDAS);
         }
-        administrador.registrarSucesso();
+        administrador.registrarAcesso(agora);
         return sessoes.entrarComoAdministrador(administrador.getId());
     }
 }

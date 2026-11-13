@@ -59,6 +59,7 @@ uniquiz:
   admin-inicial:
     usuario: ${UNIQUIZ_ADMIN_USUARIO:}
     senha: ${UNIQUIZ_ADMIN_SENHA:}
+    exigir-troca-de-senha: ${UNIQUIZ_ADMIN_EXIGIR_TROCA_DE_SENHA:true}
   pontuacao:
     multiplicador-facil: 1.0
     multiplicador-medio: 1.5

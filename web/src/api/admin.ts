@@ -2,13 +2,18 @@ import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/
 import { api } from "./cliente";
 import type {
   ColaboradorParaAdmin,
+  ContaLogada,
   DadosDoDesafio,
+  DadosDoUsuarioDoPainel,
   DesafioParaAdmin,
+  ItemDaLista,
   ModuloParaAdmin,
   PorNivel,
   ResumoDaImportacao,
+  SenhaProvisoria,
   StatusPublicacao,
   Temporada,
+  UsuarioDoPainel,
 } from "./tipos";
 
 export const chavesAdmin = {
@@ -17,6 +22,8 @@ export const chavesAdmin = {
   desafios: (licaoId: number) => ["admin", "desafios", licaoId] as const,
   colaboradores: (busca: string) => ["admin", "colaboradores", busca] as const,
   temporadas: ["admin", "temporadas"] as const,
+  usuarios: ["admin", "usuarios"] as const,
+  setoresDoPainel: ["admin", "usuarios", "setores"] as const,
 };
 
 function useAcao<TEntrada, TSaida = void>(
@@ -33,9 +40,61 @@ function useAcao<TEntrada, TSaida = void>(
 export function useAdminEu() {
   return useQuery({
     queryKey: chavesAdmin.eu,
-    queryFn: () => api.get<{ id: number }>("/admin/eu"),
+    queryFn: () => api.get<ContaLogada>("/admin/eu"),
     retry: false,
   });
+}
+
+export function useTrocarMinhaSenha() {
+  return useAcao(
+    (dados: { senhaAtual: string; novaSenha: string }) => api.post("/admin/minha-conta/senha", dados),
+    [chavesAdmin.eu],
+  );
+}
+
+export function useUsuariosDoPainel() {
+  return useQuery({
+    queryKey: chavesAdmin.usuarios,
+    queryFn: () => api.get<UsuarioDoPainel[]>("/admin/usuarios"),
+  });
+}
+
+export function useSetoresDoPainel() {
+  return useQuery({
+    queryKey: chavesAdmin.setoresDoPainel,
+    queryFn: () => api.get<ItemDaLista[]>("/admin/usuarios/setores"),
+  });
+}
+
+export function useCriarUsuarioDoPainel() {
+  return useAcao(
+    (dados: DadosDoUsuarioDoPainel & { usuario: string }) =>
+      api.post<SenhaProvisoria>("/admin/usuarios", dados),
+    [chavesAdmin.usuarios],
+  );
+}
+
+export function useEditarUsuarioDoPainel() {
+  return useAcao(
+    ({ id, ...dados }: DadosDoUsuarioDoPainel & { id: number }) => api.put(`/admin/usuarios/${id}`, dados),
+    [chavesAdmin.usuarios, chavesAdmin.eu],
+  );
+}
+
+export type AcaoSobreUsuario = "desativar" | "reativar" | "desbloquear" | "encerrar-sessoes";
+
+export function useAcaoSobreUsuario() {
+  return useAcao(
+    ({ id, acao }: { id: number; acao: AcaoSobreUsuario }) => api.post(`/admin/usuarios/${id}/${acao}`),
+    [chavesAdmin.usuarios],
+  );
+}
+
+export function useRedefinirSenhaDoUsuario() {
+  return useAcao(
+    (id: number) => api.post<SenhaProvisoria>(`/admin/usuarios/${id}/redefinir-senha`),
+    [chavesAdmin.usuarios],
+  );
 }
 
 export function useLoginAdmin() {

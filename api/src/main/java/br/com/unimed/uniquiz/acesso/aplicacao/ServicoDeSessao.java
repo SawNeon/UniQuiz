@@ -1,5 +1,7 @@
 package br.com.unimed.uniquiz.acesso.aplicacao;
 
+import br.com.unimed.uniquiz.acesso.persistencia.Administrador;
+import br.com.unimed.uniquiz.acesso.persistencia.AdministradorRepository;
 import br.com.unimed.uniquiz.acesso.persistencia.Sessao;
 import br.com.unimed.uniquiz.acesso.persistencia.SessaoRepository;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores;
@@ -20,6 +22,7 @@ public class ServicoDeSessao {
     private static final Duration DURACAO_SESSAO_ADMIN = Duration.ofHours(8);
 
     private final SessaoRepository sessoes;
+    private final AdministradorRepository administradores;
     private final ServicoDeColaboradores colaboradores;
     private final ServicoDePin pins;
     private final Duration duracaoSessaoColaborador;
@@ -27,11 +30,13 @@ public class ServicoDeSessao {
 
     public ServicoDeSessao(
             SessaoRepository sessoes,
+            AdministradorRepository administradores,
             ServicoDeColaboradores colaboradores,
             ServicoDePin pins,
             PropriedadesDoUniQuiz propriedades,
             Clock relogio) {
         this.sessoes = sessoes;
+        this.administradores = administradores;
         this.colaboradores = colaboradores;
         this.pins = pins;
         this.duracaoSessaoColaborador = propriedades.sessao().duracao();
@@ -69,16 +74,38 @@ public class ServicoDeSessao {
     public Optional<UsuarioLogado> buscar(String token) {
         return sessoes.findById(Tokens.hash(token))
                 .filter(sessao -> !sessao.expirada(relogio.instant()))
-                .filter(sessao ->
-                        sessao.getColaboradorId() == null || colaboradores.estaAtivo(sessao.getColaboradorId()))
-                .map(sessao -> sessao.getColaboradorId() != null
-                        ? new UsuarioLogado(UsuarioLogado.Perfil.COLABORADOR, sessao.getColaboradorId())
-                        : new UsuarioLogado(UsuarioLogado.Perfil.ADMINISTRADOR, sessao.getAdministradorId()));
+                .flatMap(this::usuarioDa);
+    }
+
+    private Optional<UsuarioLogado> usuarioDa(Sessao sessao) {
+        if (sessao.getColaboradorId() != null) {
+            return colaboradores.estaAtivo(sessao.getColaboradorId())
+                    ? Optional.of(UsuarioLogado.colaborador(sessao.getColaboradorId()))
+                    : Optional.empty();
+        }
+        return administradores
+                .findById(sessao.getAdministradorId())
+                .filter(Administrador::isAtivo)
+                .map(administrador -> UsuarioLogado.doPainel(
+                        administrador.getId(),
+                        administrador.getPerfil(),
+                        administrador.escopo(),
+                        administrador.isPrecisaTrocarSenha()));
     }
 
     @Transactional
     public void encerrar(String token) {
         sessoes.deleteById(Tokens.hash(token));
+    }
+
+    @Transactional
+    public void encerrarTodasDoAdministrador(Long administradorId) {
+        sessoes.apagarDoAdministrador(administradorId);
+    }
+
+    @Transactional
+    public void encerrarOutrasDoAdministrador(Long administradorId, String tokenMantido) {
+        sessoes.apagarDoAdministradorExceto(administradorId, Tokens.hash(tokenMantido));
     }
 
     @Scheduled(cron = "0 0 3 * * *")

@@ -79,7 +79,24 @@ describe("LayoutAdmin", () => {
   });
 
   it("mostra o menu e sai", async () => {
-    simularApi({ "GET /admin/eu": { corpo: { id: 1 } }, "DELETE /admin/sessao": {} });
+    simularApi({
+      "GET /admin/eu": {
+        corpo: {
+          id: 1,
+          nome: "Admin",
+          usuario: "admin",
+          perfil: "ADMINISTRADOR",
+          permissoes: [
+            "GERIR_CONTEUDO",
+            "GERIR_COLABORADORES",
+            "GERIR_TEMPORADAS",
+            "GERIR_USUARIOS_DO_PAINEL",
+          ],
+          precisaTrocarSenha: false,
+        },
+      },
+      "DELETE /admin/sessao": {},
+    });
     renderizar(<LayoutAdmin />, { rota: "/admin", caminho: "/admin" });
 
     expect(await screen.findByRole("link", { name: "Colaboradores" })).toHaveAttribute(

@@ -1,4 +1,6 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import type { ComponentType } from "react";
+import { createBrowserRouter, Navigate, type RouteObject } from "react-router";
+import type { Permissao } from "../api/tipos";
 import { TelaDeEntrada } from "../recursos/acesso/TelaDeEntrada";
 import { TelaDoCaminho } from "../recursos/caminho/TelaDoCaminho";
 import { TelaDeValidacao } from "../recursos/certificado/TelaDeValidacao";
@@ -9,6 +11,29 @@ import { TelaDePerfil } from "../recursos/perfil/TelaDePerfil";
 import { ExigeSessao } from "./ExigeSessao";
 import { LayoutDoColaborador } from "./LayoutDoColaborador";
 import { ErroDaRota, TelaDePaginaNaoEncontrada } from "./TelasDeErro";
+
+function telaProtegida(
+  caminho: string,
+  permissao: Permissao,
+  carregar: () => Promise<ComponentType>,
+): RouteObject {
+  return {
+    path: caminho,
+    lazy: async () => {
+      const [{ ExigePermissao }, Tela] = await Promise.all([
+        import("../recursos/admin/ExigePermissao"),
+        carregar(),
+      ]);
+      return {
+        Component: () => (
+          <ExigePermissao permissao={permissao}>
+            <Tela />
+          </ExigePermissao>
+        ),
+      };
+    },
+  };
+}
 
 export const rotas = createBrowserRouter([
   {
@@ -44,29 +69,27 @@ export const rotas = createBrowserRouter([
           {
             index: true,
             lazy: () =>
-              import("../recursos/admin/TelaDeConteudo").then((modulo) => ({
-                Component: modulo.TelaDeConteudo,
+              import("../recursos/admin/InicioDoPainel").then((modulo) => ({
+                Component: modulo.InicioDoPainel,
               })),
           },
+          telaProtegida("licoes/:licaoId", "GERIR_CONTEUDO", () =>
+            import("../recursos/admin/TelaDaLicaoAdmin").then((modulo) => modulo.TelaDaLicaoAdmin),
+          ),
+          telaProtegida("colaboradores", "GERIR_COLABORADORES", () =>
+            import("../recursos/admin/TelaDeColaboradores").then((modulo) => modulo.TelaDeColaboradores),
+          ),
+          telaProtegida("temporadas", "GERIR_TEMPORADAS", () =>
+            import("../recursos/admin/TelaDeTemporadas").then((modulo) => modulo.TelaDeTemporadas),
+          ),
+          telaProtegida("usuarios", "GERIR_USUARIOS_DO_PAINEL", () =>
+            import("../recursos/admin/TelaDeUsuarios").then((modulo) => modulo.TelaDeUsuarios),
+          ),
           {
-            path: "licoes/:licaoId",
+            path: "minha-conta",
             lazy: () =>
-              import("../recursos/admin/TelaDaLicaoAdmin").then((modulo) => ({
-                Component: modulo.TelaDaLicaoAdmin,
-              })),
-          },
-          {
-            path: "colaboradores",
-            lazy: () =>
-              import("../recursos/admin/TelaDeColaboradores").then((modulo) => ({
-                Component: modulo.TelaDeColaboradores,
-              })),
-          },
-          {
-            path: "temporadas",
-            lazy: () =>
-              import("../recursos/admin/TelaDeTemporadas").then((modulo) => ({
-                Component: modulo.TelaDeTemporadas,
+              import("../recursos/admin/TelaDeMinhaConta").then((modulo) => ({
+                Component: modulo.TelaDeMinhaConta,
               })),
           },
         ],

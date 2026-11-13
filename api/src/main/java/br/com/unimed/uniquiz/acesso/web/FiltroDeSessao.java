@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -35,7 +34,9 @@ class FiltroDeSessao extends OncePerRequestFilter {
 
     private static void autenticar(UsuarioLogado usuario) {
         var autenticacao = UsernamePasswordAuthenticationToken.authenticated(
-                usuario, null, List.of(new SimpleGrantedAuthority(usuario.papel())));
+                usuario,
+                null,
+                usuario.autoridades().stream().map(SimpleGrantedAuthority::new).toList());
         SecurityContext contexto = SecurityContextHolder.createEmptyContext();
         contexto.setAuthentication(autenticacao);
         SecurityContextHolder.setContext(contexto);
