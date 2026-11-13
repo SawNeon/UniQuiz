@@ -20,6 +20,7 @@ import br.com.unimed.uniquiz.comum.RecursoNaoEncontrado;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,6 +32,11 @@ public class ServicoDeSessao {
 
     public static final LimitesDaSessao LIMITES_DO_PAINEL =
             new LimitesDaSessao(Duration.ofHours(8), Duration.ofMinutes(30));
+
+    public static final LimitesDaSessao LIMITES_DO_APARELHO_COMPARTILHADO =
+            new LimitesDaSessao(Duration.ofHours(2), Duration.ofMinutes(15));
+
+    public record EntradaDoColaborador(String token, Duration duracao) {}
 
     public record SessaoAtiva(
             String id, Instant criadaEm, Instant ultimoUsoEm, String ip, String dispositivo, boolean atual) {}
@@ -63,16 +69,12 @@ public class ServicoDeSessao {
         this.relogio = relogio;
     }
 
-    public Duration duracaoSessaoColaborador() {
-        return limitesDoColaborador.duracao();
-    }
-
     public Duration duracaoSessaoAdmin() {
         return LIMITES_DO_PAINEL.duracao();
     }
 
     @Transactional(noRollbackFor = ErroDeNegocio.class)
-    public String entrarComoColaborador(Long colaboradorId, String pin) {
+    public EntradaDoColaborador entrarComoColaborador(Long colaboradorId, String pin, boolean aparelhoCompartilhado) {
         OcorrenciaDeAuditoria entrada =
                 OcorrenciaDeAuditoria.de(TipoDeAtor.COLABORADOR, colaboradorId, AcaoAuditada.ENTRADA_DO_COLABORADOR);
         ResultadoDoPin resultado;
@@ -82,12 +84,23 @@ public class ServicoDeSessao {
             auditoria.registrar(entrada.comFalha(erro.getMessage()));
             throw erro;
         }
+        LimitesDaSessao limites = aparelhoCompartilhado ? LIMITES_DO_APARELHO_COMPARTILHADO : limitesDoColaborador;
         String token = Tokens.novo();
-        sessoes.save(Sessao.deColaborador(
-                Tokens.hash(token), colaboradorId, relogio.instant(), limitesDoColaborador, origemAtual()));
-        auditoria.registrar(
-                resultado == ResultadoDoPin.PIN_CRIADO ? entrada.comDetalhe("Primeiro acesso: PIN criado") : entrada);
-        return token;
+        sessoes.save(
+                Sessao.deColaborador(Tokens.hash(token), colaboradorId, relogio.instant(), limites, origemAtual()));
+        auditoria.registrar(entrada.comDetalhe(detalheDaEntrada(resultado, aparelhoCompartilhado)));
+        return new EntradaDoColaborador(token, limites.duracao());
+    }
+
+    private static String detalheDaEntrada(ResultadoDoPin resultado, boolean aparelhoCompartilhado) {
+        List<String> detalhes = new ArrayList<>();
+        if (resultado == ResultadoDoPin.PIN_CRIADO) {
+            detalhes.add("Primeiro acesso: PIN criado");
+        }
+        if (aparelhoCompartilhado) {
+            detalhes.add("Aparelho compartilhado");
+        }
+        return detalhes.isEmpty() ? null : String.join("; ", detalhes);
     }
 
     @Transactional

@@ -126,6 +126,31 @@ class ServicoDePinTest {
         assertThatThrownBy(() -> servico.redefinir(99L)).isInstanceOf(RecursoNaoEncontrado.class);
     }
 
+    @Test
+    void avisaQuantasTentativasRestamAPartirDoTerceiroErro() {
+        servico.verificarOuCriar(ID, "482");
+        errarVezes(2);
+
+        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+                .hasMessage("PIN incorreto. Restam 2 tentativas antes do bloqueio.");
+        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+                .hasMessage("PIN incorreto. Resta 1 tentativa antes do bloqueio.");
+        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+                .hasMessage("PIN incorreto. O acesso ficou bloqueado até as 12:15."
+                        + " Se esqueceu o PIN, procure o administrador do UniQuiz.");
+    }
+
+    @Test
+    void bloqueioDizAteQueHorasVale() {
+        servico.verificarOuCriar(ID, "482");
+        errarVezes(5);
+        relogio.avancar(Duration.ofMinutes(5));
+
+        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "482"))
+                .hasMessage("Acesso bloqueado por excesso de tentativas. Tente de novo às 12:15."
+                        + " Se esqueceu o PIN, procure o administrador do UniQuiz.");
+    }
+
     private void errarVezes(int vezes) {
         for (int tentativa = 0; tentativa < vezes; tentativa++) {
             assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000")).isInstanceOf(ErroDeNegocio.class);

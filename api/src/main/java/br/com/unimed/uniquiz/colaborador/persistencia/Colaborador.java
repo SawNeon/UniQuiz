@@ -81,6 +81,14 @@ public class Colaborador {
         liberarPin();
     }
 
+    public int tentativasDePinRestantes() {
+        return TENTATIVAS_DE_PIN_ANTES_DO_BLOQUEIO - tentativasFalhasPin;
+    }
+
+    public Instant getPinBloqueadoAte() {
+        return pinBloqueadoAte;
+    }
+
     private void liberarPin() {
         tentativasFalhasPin = 0;
         pinBloqueadoAte = null;

@@ -1,5 +1,5 @@
 import { criarSessaoVirtual } from "./cliente.mjs";
-import { PIN_DOS_USUARIOS, respostaCertaPara } from "./dados.mjs";
+import { PIN_DOS_USUARIOS, PREFIXO_DOS_DADOS, respostaCertaPara } from "./dados.mjs";
 import { emParalelo, pausar, pensar } from "./tempo.mjs";
 
 async function medir(metricas, rotulo, sessao, pedido) {
@@ -80,7 +80,9 @@ export async function cenarioLeitura({ cliente, metricas, concorrencia, duracaoM
       });
       const setorId = setores.corpo?.[0]?.id;
       if (setorId !== undefined) {
-        await medir(metricas, "lista de nomes do setor", sessao, { caminho: `/api/setores/${setorId}/colaboradores` });
+        await medir(metricas, "busca de nomes do setor", sessao, {
+          caminho: `/api/setores/${setorId}/colaboradores?busca=${encodeURIComponent(PREFIXO_DOS_DADOS)}`,
+        });
       }
     }
   });

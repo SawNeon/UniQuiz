@@ -14,7 +14,8 @@ public interface ColaboradorRepository extends JpaRepository<Colaborador, Long> 
     @Query("select c from Colaborador c where c.id = :id")
     Optional<Colaborador> buscarTravadoPorId(@Param("id") Long id);
 
-    List<Colaborador> findBySetorIdAndAtivoTrueOrderByNomeAsc(Long setorId);
+    List<Colaborador> findTop10BySetorIdAndAtivoTrueAndNomeNormalizadoContainingOrderByNomeAsc(
+            Long setorId, String trecho);
 
     List<Colaborador> findTop200ByNomeNormalizadoContainingOrderByNomeAsc(String trecho);
 

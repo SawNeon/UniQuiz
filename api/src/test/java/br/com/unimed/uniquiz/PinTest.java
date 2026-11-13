@@ -47,12 +47,12 @@ class PinTest extends TesteDeIntegracao {
     @Test
     void listaDaEntradaDizSeAPessoaJaTemPin() throws Exception {
         long setor = jdbc.queryForObject("SELECT setor_id FROM colaborador WHERE nome = ?", Long.class, "Ana Exemplo");
-        mvc.perform(get("/api/setores/{id}/colaboradores", setor))
+        mvc.perform(get("/api/setores/{id}/colaboradores", setor).param("busca", "ana"))
                 .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(false));
 
         mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/setores/{id}/colaboradores", setor))
+        mvc.perform(get("/api/setores/{id}/colaboradores", setor).param("busca", "ana"))
                 .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(true));
     }
 

@@ -95,6 +95,21 @@ class ServicoDeColaboradoresTest {
         verify(colaboradores, never()).save(any(Colaborador.class));
     }
 
+    @Test
+    void buscaDaEntradaExigeTresLetrasEIgnoraAcentos() {
+        when(colaboradores.findTop10BySetorIdAndAtivoTrueAndNomeNormalizadoContainingOrderByNomeAsc(2L, "JOA"))
+                .thenReturn(List.of(new Colaborador(1L, 2L, "João Ávila", Instant.parse("2026-11-12T12:00:00Z"))));
+
+        assertThat(servico.buscarNaEntrada(2L, "  joã "))
+                .extracting(ServicoDeColaboradores.ColaboradorDaEntrada::nome)
+                .containsExactly("João Ávila");
+        assertThatThrownBy(() -> servico.buscarNaEntrada(2L, "jo"))
+                .isInstanceOf(ErroDeNegocio.class)
+                .hasMessage("Digite pelo menos 3 letras do seu nome.");
+        assertThatThrownBy(() -> servico.buscarNaEntrada(2L, "a 1 2 3")).isInstanceOf(ErroDeNegocio.class);
+        assertThatThrownBy(() -> servico.buscarNaEntrada(2L, null)).isInstanceOf(ErroDeNegocio.class);
+    }
+
     private Colaborador colaboradorSalvo() {
         ArgumentCaptor<Colaborador> captor = ArgumentCaptor.forClass(Colaborador.class);
         verify(colaboradores).save(captor.capture());

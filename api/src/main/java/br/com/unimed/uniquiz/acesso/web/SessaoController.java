@@ -1,6 +1,7 @@
 package br.com.unimed.uniquiz.acesso.web;
 
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeSessao;
+import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeSessao.EntradaDoColaborador;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +20,8 @@ class SessaoController {
 
     record PedidoDeEntrada(
             @NotNull Long colaboradorId,
-            @NotNull @Pattern(regexp = "\\d{3}", message = "O PIN tem 3 números.") String pin) {}
+            @NotNull @Pattern(regexp = "\\d{3}", message = "O PIN tem 3 números.") String pin,
+            boolean aparelhoCompartilhado) {}
 
     private final ServicoDeSessao sessoes;
     private final CookiesDeSessao cookies;
@@ -31,12 +33,12 @@ class SessaoController {
 
     @PostMapping
     ResponseEntity<Void> entrar(@Valid @RequestBody PedidoDeEntrada pedido) {
-        String token = sessoes.entrarComoColaborador(pedido.colaboradorId(), pedido.pin());
+        EntradaDoColaborador entrada =
+                sessoes.entrarComoColaborador(pedido.colaboradorId(), pedido.pin(), pedido.aparelhoCompartilhado());
         return ResponseEntity.noContent()
                 .header(
                         HttpHeaders.SET_COOKIE,
-                        cookies.colaborador(token, sessoes.duracaoSessaoColaborador())
-                                .toString())
+                        cookies.colaborador(entrada.token(), entrada.duracao()).toString())
                 .build();
     }
 

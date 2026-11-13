@@ -62,18 +62,27 @@ export function useSetores(empresaId: number | null) {
   });
 }
 
-export function useColaboradoresDoSetor(setorId: number | null) {
+export const LETRAS_MINIMAS_NA_BUSCA = 3;
+
+export function letrasDe(texto: string): number {
+  return (texto.match(/\p{L}/gu) ?? []).length;
+}
+
+export function useColaboradoresDoSetor(setorId: number | null, busca: string) {
+  const termo = busca.trim();
   return useQuery({
-    queryKey: ["colaboradores", setorId],
-    queryFn: () => api.get<ColaboradorDaEntrada[]>(`/setores/${setorId}/colaboradores`),
-    enabled: setorId !== null,
+    queryKey: ["colaboradores", setorId, termo],
+    queryFn: () =>
+      api.get<ColaboradorDaEntrada[]>(`/setores/${setorId}/colaboradores?busca=${encodeURIComponent(termo)}`),
+    enabled: setorId !== null && letrasDe(termo) >= LETRAS_MINIMAS_NA_BUSCA,
   });
 }
 
 export function useEntrar() {
   const cliente = useQueryClient();
   return useMutation({
-    mutationFn: (dados: { colaboradorId: number; pin: string }) => api.post("/sessao", dados),
+    mutationFn: (dados: { colaboradorId: number; pin: string; aparelhoCompartilhado: boolean }) =>
+      api.post("/sessao", dados),
     onSuccess: () => cliente.invalidateQueries(),
   });
 }

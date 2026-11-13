@@ -31,6 +31,8 @@ public class ServicoDeColaboradores {
     public record ColaboradorParaAdmin(
             Long id, String nome, String setor, String empresa, boolean ativo, boolean temPin) {}
 
+    public static final int LETRAS_MINIMAS_NA_BUSCA_DA_ENTRADA = 3;
+
     private final EmpresaRepository empresas;
     private final SetorRepository setores;
     private final ColaboradorRepository colaboradores;
@@ -81,8 +83,15 @@ public class ServicoDeColaboradores {
     }
 
     @Transactional(readOnly = true)
-    public List<ColaboradorDaEntrada> ativosDoSetor(Long setorId) {
-        return colaboradores.findBySetorIdAndAtivoTrueOrderByNomeAsc(setorId).stream()
+    public List<ColaboradorDaEntrada> buscarNaEntrada(Long setorId, String busca) {
+        String trecho = Textos.normalizar(busca);
+        if (trecho.codePoints().filter(Character::isLetter).count() < LETRAS_MINIMAS_NA_BUSCA_DA_ENTRADA) {
+            throw new ErroDeNegocio(
+                    "Digite pelo menos %d letras do seu nome.".formatted(LETRAS_MINIMAS_NA_BUSCA_DA_ENTRADA));
+        }
+        return colaboradores
+                .findTop10BySetorIdAndAtivoTrueAndNomeNormalizadoContainingOrderByNomeAsc(setorId, trecho)
+                .stream()
                 .map(colaborador ->
                         new ColaboradorDaEntrada(colaborador.getId(), colaborador.getNome(), colaborador.temPin()))
                 .toList();

@@ -28,19 +28,8 @@ export async function reutilizarDados({ cliente, administrador }) {
   const preparo = criarPreparo(sessaoAdmin);
   await preparo.entrarComoAdmin(administrador);
   const licaoId = await preparo.licaoDeCarga();
-  const colaboradores = await listarColaboradoresDeCarga(cliente);
+  const colaboradores = await preparo.listarColaboradoresDeCarga();
   return { licaoId, colaboradores, limitesAtingidosNoPreparo: preparo.limitesAtingidos() };
-}
-
-async function listarColaboradoresDeCarga(cliente) {
-  const empresas = await cliente.requisitar({ caminho: "/api/empresas" });
-  const empresa = empresas.corpo.find((item) => item.nome === `${PREFIXO_DOS_DADOS} Empresa`);
-  const setores = await cliente.requisitar({ caminho: `/api/empresas/${empresa.id}/setores` });
-  const setor = setores.corpo.find((item) => item.nome === `${PREFIXO_DOS_DADOS} Setor`);
-  const nomes = await cliente.requisitar({ caminho: `/api/setores/${setor.id}/colaboradores` });
-  return nomes.corpo
-    .filter((pessoa) => pessoa.nome.startsWith(`${PREFIXO_DOS_DADOS} `))
-    .map(({ id, nome }) => ({ id, nome }));
 }
 
 function criarPreparo(sessao) {
@@ -64,6 +53,23 @@ function criarPreparo(sessao) {
 
   async function entrarComoAdmin({ usuario, senha }) {
     await enviar({ metodo: "POST", caminho: "/api/admin/login", corpo: { usuario, senha } }, 204);
+  }
+
+  async function listarColaboradoresDeCarga() {
+    const encontrados = [];
+    for (let centena = 0; centena < 100; centena++) {
+      const trecho = `${PREFIXO_DOS_DADOS} ${String(centena).padStart(2, "0")}`;
+      const pessoas = await enviar(
+        { caminho: `/api/admin/colaboradores?busca=${encodeURIComponent(trecho)}` },
+        200,
+      );
+      const daCarga = pessoas.filter((pessoa) => pessoa.nome.startsWith(trecho) && pessoa.ativo);
+      if (daCarga.length === 0) {
+        break;
+      }
+      encontrados.push(...daCarga.map(({ id, nome }) => ({ id, nome })));
+    }
+    return encontrados;
   }
 
   async function licaoDeCarga() {
@@ -134,6 +140,7 @@ function criarPreparo(sessao) {
   return {
     entrarComoAdmin,
     licaoDeCarga,
+    listarColaboradoresDeCarga,
     criarModulo,
     criarLicao,
     publicar,
