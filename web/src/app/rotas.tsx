@@ -85,6 +85,9 @@ export const rotas = createBrowserRouter([
           telaProtegida("usuarios", "GERIR_USUARIOS_DO_PAINEL", () =>
             import("../recursos/admin/TelaDeUsuarios").then((modulo) => modulo.TelaDeUsuarios),
           ),
+          telaProtegida("auditoria", "VER_AUDITORIA", () =>
+            import("../recursos/admin/TelaDeAuditoria").then((modulo) => modulo.TelaDeAuditoria),
+          ),
           {
             path: "minha-conta",
             lazy: () =>

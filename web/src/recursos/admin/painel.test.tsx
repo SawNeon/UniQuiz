@@ -2,7 +2,7 @@ import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { Route, Routes } from "react-router";
-import type { ContaLogada, UsuarioDoPainel } from "../../api/tipos";
+import type { ContaLogada, SessaoAtiva, UsuarioDoPainel } from "../../api/tipos";
 import { renderizar, simularApi } from "../../testes/utilidades";
 import { ExigePermissao } from "./ExigePermissao";
 import { InicioDoPainel } from "./InicioDoPainel";
@@ -112,7 +112,7 @@ describe("InicioDoPainel e ExigePermissao", () => {
     simularApi({});
     renderizar(comConta(auditor, <InicioDoPainel />), { rota: "/admin", caminho: "/admin" });
 
-    expect(await screen.findByText("Página: /admin/minha-conta")).toBeInTheDocument();
+    expect(await screen.findByText("Página: /admin/auditoria")).toBeInTheDocument();
   });
 
   it("explica quando o perfil não abre a área", () => {
@@ -151,23 +151,68 @@ describe("InicioDoPainel e ExigePermissao", () => {
 });
 
 describe("TelaDeMinhaConta", () => {
-  it("mostra os dados e confere a nova senha antes de enviar", async () => {
-    const chamadas = simularApi({});
+  const sessoes: SessaoAtiva[] = [
+    {
+      id: "aaaa1111bbbb2222",
+      criadaEm: "2026-11-13T12:00:00Z",
+      ultimoUsoEm: "2026-11-13T12:10:00Z",
+      ip: "10.0.0.5",
+      dispositivo: "Chrome no Windows",
+      atual: true,
+    },
+    {
+      id: "cccc3333dddd4444",
+      criadaEm: "2026-11-12T09:00:00Z",
+      ultimoUsoEm: "2026-11-12T09:30:00Z",
+      dispositivo: "Safari no iPhone",
+      atual: false,
+    },
+  ];
+
+  it("mostra os dados, a força da senha e confere a nova senha antes de enviar", async () => {
+    const chamadas = simularApi({ "GET /admin/minha-conta/sessoes": { corpo: [] } });
     renderizar(comConta(auditor, <TelaDeMinhaConta />));
 
     expect(screen.getByText("rui")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Senha atual"), "atual");
     await userEvent.type(screen.getByLabelText("Nova senha"), "curta");
+    expect(screen.getByText("Força da senha: Curta demais")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("Repita a nova senha"), "outra");
     await userEvent.click(screen.getByRole("button", { name: "Trocar senha" }));
 
     expect(await screen.findByText("Use pelo menos 12 caracteres.")).toBeInTheDocument();
     expect(screen.getByText("As duas senhas precisam ser iguais.")).toBeInTheDocument();
-    expect(chamadas).toHaveLength(0);
+    expect(chamadas.filter((chamada) => chamada.metodo === "POST")).toHaveLength(0);
+  });
+
+  it("lista as sessões e encerra as de outros aparelhos", async () => {
+    const chamadas = simularApi({
+      "GET /admin/minha-conta/sessoes": { corpo: sessoes },
+      "DELETE /admin/minha-conta/sessoes/cccc3333dddd4444": {},
+      "POST /admin/minha-conta/sessoes/encerrar-outras": {},
+    });
+    renderizar(comConta(auditor, <TelaDeMinhaConta />));
+
+    const daqui = await screen.findByRole("listitem", { name: "Chrome no Windows" });
+    expect(within(daqui).getByText("Este aparelho")).toBeInTheDocument();
+    expect(within(daqui).queryByRole("button", { name: "Encerrar" })).not.toBeInTheDocument();
+    expect(within(daqui).getByText(/IP 10\.0\.0\.5/)).toBeInTheDocument();
+
+    const iphone = screen.getByRole("listitem", { name: "Safari no iPhone" });
+    await userEvent.click(within(iphone).getByRole("button", { name: "Encerrar" }));
+    await userEvent.click(screen.getByRole("button", { name: "Sair dos outros aparelhos" }));
+
+    expect(chamadas.map((chamada) => `${chamada.metodo} ${chamada.caminho}`)).toEqual(
+      expect.arrayContaining([
+        "DELETE /admin/minha-conta/sessoes/cccc3333dddd4444",
+        "POST /admin/minha-conta/sessoes/encerrar-outras",
+      ]),
+    );
   });
 
   it("mostra a recusa do servidor", async () => {
     simularApi({
+      "GET /admin/minha-conta/sessoes": { corpo: [] },
       "POST /admin/minha-conta/senha": { status: 422, corpo: { detail: "A senha atual não confere." } },
     });
     renderizar(comConta(auditor, <TelaDeMinhaConta />));

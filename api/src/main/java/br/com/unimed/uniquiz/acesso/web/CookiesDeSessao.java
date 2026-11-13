@@ -16,6 +16,8 @@ public class CookiesDeSessao {
     static final String ADMINISTRADOR = "uniquiz_admin";
     private static final String CAMINHO_COLABORADOR = "/api";
     private static final String CAMINHO_ADMINISTRADOR = "/api/admin";
+    private static final String MESMO_SITE_COM_LINKS = "Lax";
+    private static final String SO_MESMO_SITE = "Strict";
 
     private final boolean seguro;
 
@@ -24,19 +26,19 @@ public class CookiesDeSessao {
     }
 
     ResponseCookie colaborador(String token, Duration duracao) {
-        return criar(COLABORADOR, token, CAMINHO_COLABORADOR, duracao);
+        return criar(COLABORADOR, token, CAMINHO_COLABORADOR, MESMO_SITE_COM_LINKS, duracao);
     }
 
     ResponseCookie administrador(String token, Duration duracao) {
-        return criar(ADMINISTRADOR, token, CAMINHO_ADMINISTRADOR, duracao);
+        return criar(ADMINISTRADOR, token, CAMINHO_ADMINISTRADOR, SO_MESMO_SITE, duracao);
     }
 
     ResponseCookie apagarColaborador() {
-        return criar(COLABORADOR, "", CAMINHO_COLABORADOR, Duration.ZERO);
+        return criar(COLABORADOR, "", CAMINHO_COLABORADOR, MESMO_SITE_COM_LINKS, Duration.ZERO);
     }
 
     ResponseCookie apagarAdministrador() {
-        return criar(ADMINISTRADOR, "", CAMINHO_ADMINISTRADOR, Duration.ZERO);
+        return criar(ADMINISTRADOR, "", CAMINHO_ADMINISTRADOR, SO_MESMO_SITE, Duration.ZERO);
     }
 
     static Optional<String> ler(HttpServletRequest requisicao, String nome) {
@@ -51,11 +53,11 @@ public class CookiesDeSessao {
                 .findFirst();
     }
 
-    private ResponseCookie criar(String nome, String valor, String caminho, Duration duracao) {
+    private ResponseCookie criar(String nome, String valor, String caminho, String mesmoSite, Duration duracao) {
         return ResponseCookie.from(nome, valor)
                 .httpOnly(true)
                 .secure(seguro)
-                .sameSite("Lax")
+                .sameSite(mesmoSite)
                 .path(caminho)
                 .maxAge(duracao)
                 .build();

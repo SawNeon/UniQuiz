@@ -23,15 +23,21 @@ public class ServicoDePin {
         this.relogio = relogio;
     }
 
+    public enum ResultadoDoPin {
+        PIN_CRIADO,
+        PIN_CONFIRMADO
+    }
+
     @Transactional(noRollbackFor = ErroDeNegocio.class)
-    public void verificarOuCriar(Long colaboradorId, String pin) {
+    public ResultadoDoPin verificarOuCriar(Long colaboradorId, String pin) {
         Colaborador colaborador = colaboradorAtivo(colaboradorId);
         if (!colaborador.temPin()) {
             colaborador.definirPin(codificador.encode(pin));
-            return;
+            return ResultadoDoPin.PIN_CRIADO;
         }
         exigirDesbloqueado(colaborador);
         confirmarPin(colaborador, pin);
+        return ResultadoDoPin.PIN_CONFIRMADO;
     }
 
     @Transactional

@@ -1,8 +1,12 @@
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./cliente";
 import type {
+  AlertasDeAuditoria,
   ColaboradorParaAdmin,
   ContaLogada,
+  FiltroDeAuditoria,
+  PaginaDeAuditoria,
+  SessaoAtiva,
   DadosDoDesafio,
   DadosDoUsuarioDoPainel,
   DesafioParaAdmin,
@@ -24,6 +28,10 @@ export const chavesAdmin = {
   temporadas: ["admin", "temporadas"] as const,
   usuarios: ["admin", "usuarios"] as const,
   setoresDoPainel: ["admin", "usuarios", "setores"] as const,
+  minhasSessoes: ["admin", "minha-conta", "sessoes"] as const,
+  auditoria: (filtro: FiltroDeAuditoria) => ["admin", "auditoria", filtro] as const,
+  alertas: ["admin", "auditoria", "alertas"] as const,
+  acoesAuditadas: ["admin", "auditoria", "acoes"] as const,
 };
 
 function useAcao<TEntrada, TSaida = void>(
@@ -50,6 +58,57 @@ export function useTrocarMinhaSenha() {
     (dados: { senhaAtual: string; novaSenha: string }) => api.post("/admin/minha-conta/senha", dados),
     [chavesAdmin.eu],
   );
+}
+
+export function useMinhasSessoes() {
+  return useQuery({
+    queryKey: chavesAdmin.minhasSessoes,
+    queryFn: () => api.get<SessaoAtiva[]>("/admin/minha-conta/sessoes"),
+  });
+}
+
+export function useEncerrarMinhaSessao() {
+  return useAcao(
+    (id: string) => api.delete(`/admin/minha-conta/sessoes/${encodeURIComponent(id)}`),
+    [chavesAdmin.minhasSessoes],
+  );
+}
+
+export function useEncerrarMinhasOutrasSessoes() {
+  return useAcao(() => api.post("/admin/minha-conta/sessoes/encerrar-outras"), [chavesAdmin.minhasSessoes]);
+}
+
+export function parametrosDaAuditoria(filtro: FiltroDeAuditoria): string {
+  const parametros = new URLSearchParams();
+  Object.entries(filtro).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== "") {
+      parametros.set(chave, String(valor));
+    }
+  });
+  return parametros.toString();
+}
+
+export function useRegistroDeAuditoria(filtro: FiltroDeAuditoria) {
+  return useQuery({
+    queryKey: chavesAdmin.auditoria(filtro),
+    queryFn: () => api.get<PaginaDeAuditoria>(`/admin/auditoria?${parametrosDaAuditoria(filtro)}`),
+    placeholderData: (anterior) => anterior,
+  });
+}
+
+export function useAlertasDeAuditoria() {
+  return useQuery({
+    queryKey: chavesAdmin.alertas,
+    queryFn: () => api.get<AlertasDeAuditoria>("/admin/auditoria/alertas"),
+  });
+}
+
+export function useAcoesAuditadas() {
+  return useQuery({
+    queryKey: chavesAdmin.acoesAuditadas,
+    queryFn: () => api.get<{ codigo: string; descricao: string }[]>("/admin/auditoria/acoes"),
+    staleTime: Infinity,
+  });
 }
 
 export function useUsuariosDoPainel() {
@@ -86,14 +145,14 @@ export type AcaoSobreUsuario = "desativar" | "reativar" | "desbloquear" | "encer
 export function useAcaoSobreUsuario() {
   return useAcao(
     ({ id, acao }: { id: number; acao: AcaoSobreUsuario }) => api.post(`/admin/usuarios/${id}/${acao}`),
-    [chavesAdmin.usuarios],
+    [chavesAdmin.usuarios, chavesAdmin.alertas],
   );
 }
 
 export function useRedefinirSenhaDoUsuario() {
   return useAcao(
     (id: number) => api.post<SenhaProvisoria>(`/admin/usuarios/${id}/redefinir-senha`),
-    [chavesAdmin.usuarios],
+    [chavesAdmin.usuarios, chavesAdmin.alertas],
   );
 }
 

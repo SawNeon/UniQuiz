@@ -3,6 +3,7 @@ package br.com.unimed.uniquiz.auditoria.aplicacao;
 import br.com.unimed.uniquiz.auditoria.dominio.OcorrenciaDeAuditoria;
 import br.com.unimed.uniquiz.auditoria.persistencia.RegistroDeAuditoria;
 import br.com.unimed.uniquiz.auditoria.persistencia.RegistroDeAuditoriaRepository;
+import br.com.unimed.uniquiz.comum.OrigemDaRequisicao;
 import java.time.Clock;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

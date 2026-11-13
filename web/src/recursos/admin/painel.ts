@@ -12,8 +12,15 @@ export const SECOES_DO_PAINEL: SecaoDoPainel[] = [
   { para: "/admin/colaboradores", rotulo: "Colaboradores", permissao: "GERIR_COLABORADORES" },
   { para: "/admin/temporadas", rotulo: "Temporadas", permissao: "GERIR_TEMPORADAS" },
   { para: "/admin/usuarios", rotulo: "Usuários do painel", permissao: "GERIR_USUARIOS_DO_PAINEL" },
+  { para: "/admin/auditoria", rotulo: "Auditoria", permissao: "VER_AUDITORIA" },
   { para: "/admin/minha-conta", rotulo: "Minha conta" },
 ];
+
+const FORMATO_DE_MOMENTO = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
+
+export function formatarMomento(momento: string): string {
+  return FORMATO_DE_MOMENTO.format(new Date(momento));
+}
 
 export const PERFIS_DO_PAINEL: Record<PerfilDoPainel, { rotulo: string; descricao: string }> = {
   ADMINISTRADOR: {

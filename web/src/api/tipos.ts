@@ -310,3 +310,67 @@ export interface SenhaProvisoria {
   usuario: string;
   senha: string;
 }
+
+export interface SessaoAtiva {
+  id: string;
+  criadaEm: string;
+  ultimoUsoEm: string;
+  ip?: string | null;
+  dispositivo?: string | null;
+  atual: boolean;
+}
+
+export type TipoDeAtor = "ADMINISTRADOR" | "COLABORADOR" | "ANONIMO";
+export type ResultadoDaAcao = "SUCESSO" | "FALHA";
+
+export interface RegistroDeAuditoria {
+  id: number;
+  momento: string;
+  atorTipo: TipoDeAtor;
+  atorId?: number | null;
+  atorNome?: string | null;
+  acao: string;
+  acaoDescricao: string;
+  alvo?: string | null;
+  resultado: ResultadoDaAcao;
+  detalhe?: string | null;
+  ip?: string | null;
+}
+
+export interface PaginaDeAuditoria {
+  itens: RegistroDeAuditoria[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+}
+
+export interface FalhasDeEntrada {
+  quem?: string | null;
+  ip?: string | null;
+  falhas: number;
+  ultima: string;
+}
+
+export interface ContaBloqueada {
+  tipo: "ADMINISTRADOR" | "COLABORADOR";
+  id: number;
+  nome: string;
+  ate: string;
+}
+
+export interface AlertasDeAuditoria {
+  desde: string;
+  falhasPorPessoa: FalhasDeEntrada[];
+  falhasPorIp: FalhasDeEntrada[];
+  contasBloqueadas: ContaBloqueada[];
+}
+
+export interface FiltroDeAuditoria {
+  atorTipo?: TipoDeAtor;
+  acao?: string;
+  resultado?: ResultadoDaAcao;
+  busca?: string;
+  de?: string;
+  ate?: string;
+  pagina: number;
+}

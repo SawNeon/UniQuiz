@@ -15,7 +15,7 @@ import type { ItemDaLista, PerfilDoPainel, SenhaProvisoria, UsuarioDoPainel } fr
 import { Botao } from "../../componentes/ui/Botao";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
 import { Campo, Entrada } from "./componentes";
-import { PERFIS_DO_PAINEL, useContaDoPainel } from "./painel";
+import { formatarMomento, PERFIS_DO_PAINEL, useContaDoPainel } from "./painel";
 
 const PERFIS = Object.keys(PERFIS_DO_PAINEL) as PerfilDoPainel[];
 
@@ -36,8 +36,6 @@ const esquema = z
   });
 
 type DadosDoFormulario = z.input<typeof esquema>;
-
-const formatoDeData = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
 export function TelaDeUsuarios() {
   const usuarios = useUsuariosDoPainel();
@@ -125,7 +123,7 @@ function LinhaDoUsuario({
           </span>
           <span className="text-sm">
             {usuario.ultimoAcessoEm
-              ? `Último acesso em ${formatoDeData.format(new Date(usuario.ultimoAcessoEm))}`
+              ? `Último acesso em ${formatarMomento(usuario.ultimoAcessoEm)}`
               : "Ainda não entrou"}
           </span>
         </div>
