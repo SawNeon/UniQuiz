@@ -374,3 +374,117 @@ export interface FiltroDeAuditoria {
   ate?: string;
   pagina: number;
 }
+
+export type SituacaoNoModulo = "CONCLUIU" | "EM_ANDAMENTO" | "NAO_COMECOU";
+
+export type AvaliacaoDaCalibracao =
+  "ADEQUADA" | "MAIS_FACIL_QUE_O_PREVISTO" | "MAIS_DIFICIL_QUE_O_PREVISTO" | "POUCOS_DADOS";
+
+export type RelatorioExportavel =
+  "conformidade-pessoas" | "desempenho-licoes" | "desempenho-desafios" | "engajamento";
+
+export type FormatoDeExportacao = "CSV" | "XLSX";
+
+export interface FiltrosDosRelatorios {
+  setores: { id: number; nome: string; empresa: string }[];
+  modulos: { id: number; titulo: string }[];
+}
+
+export interface Conformidade {
+  pessoas: number;
+  totalDeLicoes: number;
+  trilha: { concluiram: number; emAndamento: number; naoComecaram: number };
+  modulos: {
+    id: number;
+    titulo: string;
+    licoes: number;
+    concluiram: number;
+    emAndamento: number;
+    naoComecaram: number;
+  }[];
+  setores: {
+    id: number;
+    setor: string;
+    empresa: string;
+    pessoas: number;
+    concluiramATrilha: number;
+    licoesConcluidas: number;
+  }[];
+}
+
+export interface PessoaNaConformidade {
+  id: number;
+  nome: string;
+  setor: string;
+  empresa: string;
+  licoesConcluidas: number;
+  totalDeLicoes: number;
+  modulosConcluidos: number;
+  totalDeModulos: number;
+  situacao: SituacaoNoModulo;
+  ultimaAtividade?: string;
+}
+
+export interface FiltroDePessoas {
+  setorId?: number;
+  moduloId?: number;
+  situacao?: SituacaoNoModulo;
+  busca?: string;
+  pagina: number;
+}
+
+export interface PaginaDePessoas {
+  itens: PessoaNaConformidade[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+}
+
+export interface FiltroDeDesempenho {
+  de?: string;
+  ate?: string;
+  moduloId?: number;
+}
+
+export interface Desempenho {
+  de: string;
+  ate: string;
+  licoes: {
+    id: number;
+    modulo: string;
+    licao: string;
+    iniciadas: number;
+    concluidas: number;
+    perfeitas: number;
+    abandonadas: number;
+    primeirasRespostas: number;
+    acertoNaPrimeira?: number;
+    abandono?: number;
+  }[];
+  desafios: {
+    id: number;
+    modulo?: string;
+    licao?: string;
+    enunciado: string;
+    tipo: TipoDesafio;
+    dificuldade: Dificuldade;
+    respostas: number;
+    acertos: number;
+    acerto?: number;
+    dificuldadeObservada?: Dificuldade;
+    calibracao: AvaliacaoDaCalibracao;
+    erroMaisComum?: string;
+    vezesDoErroMaisComum: number;
+  }[];
+}
+
+export interface Engajamento {
+  pessoasNoEscopo: number;
+  semanas: {
+    inicio: string;
+    pessoasAtivas: number;
+    licoesConcluidas: number;
+    novosParticipantes: number;
+    participacao: number;
+  }[];
+}
