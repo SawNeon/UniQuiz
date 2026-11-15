@@ -12,7 +12,8 @@ import java.time.Instant;
 import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 public class ServicoDeLoginAdmin {
@@ -25,6 +26,7 @@ public class ServicoDeLoginAdmin {
     private final ServicoDeSessao sessoes;
     private final ServicoDeAuditoria auditoria;
     private final PasswordEncoder codificador;
+    private final TransactionTemplate transacao;
     private final Clock relogio;
     private final String hashDeReferencia;
 
@@ -33,42 +35,59 @@ public class ServicoDeLoginAdmin {
             ServicoDeSessao sessoes,
             ServicoDeAuditoria auditoria,
             PasswordEncoder codificador,
+            PlatformTransactionManager gerenciadorDeTransacoes,
             Clock relogio) {
         this.administradores = administradores;
         this.sessoes = sessoes;
         this.auditoria = auditoria;
         this.codificador = codificador;
+        this.transacao = new TransactionTemplate(gerenciadorDeTransacoes);
         this.relogio = relogio;
         this.hashDeReferencia = codificador.encode("referencia-para-tempo-constante");
     }
 
-    @Transactional(noRollbackFor = ErroDeNegocio.class)
     public String entrar(String usuario, String senha) {
+        Verificacao verificacao = transacao.execute(estado -> verificar(usuario, senha));
+        auditoria.registrar(verificacao.ocorrencia());
+        if (verificacao.recusa() != null) {
+            throw new ErroDeNegocio(verificacao.recusa());
+        }
+        return sessoes.entrarComoAdministrador(verificacao.administradorId());
+    }
+
+    private Verificacao verificar(String usuario, String senha) {
         Instant agora = relogio.instant();
         Optional<Administrador> encontrado =
-                administradores.findByUsuario(usuario).filter(Administrador::isAtivo);
+                administradores.buscarTravadoPorUsuario(usuario).filter(Administrador::isAtivo);
         if (encontrado.isEmpty()) {
             codificador.matches(senha, hashDeReferencia);
-            auditoria.registrar(OcorrenciaDeAuditoria.de(TipoDeAtor.ANONIMO, null, AcaoAuditada.ENTRADA_NO_PAINEL)
-                    .descrevendoOAtor(usuario)
-                    .comFalha("Usuário inexistente ou desativado"));
-            throw new ErroDeNegocio(CREDENCIAIS_INVALIDAS);
+            return Verificacao.recusada(
+                    OcorrenciaDeAuditoria.de(TipoDeAtor.ANONIMO, null, AcaoAuditada.ENTRADA_NO_PAINEL)
+                            .descrevendoOAtor(usuario)
+                            .comFalha("Usuário inexistente ou desativado"),
+                    CREDENCIAIS_INVALIDAS);
         }
         Administrador administrador = encontrado.get();
         OcorrenciaDeAuditoria entrada = OcorrenciaDeAuditoria.de(
                 TipoDeAtor.ADMINISTRADOR, administrador.getId(), AcaoAuditada.ENTRADA_NO_PAINEL);
         if (administrador.bloqueado(agora)) {
-            auditoria.registrar(entrada.comFalha("Conta bloqueada"));
-            throw new ErroDeNegocio(ACESSO_BLOQUEADO);
+            return Verificacao.recusada(entrada.comFalha("Conta bloqueada"), ACESSO_BLOQUEADO);
         }
         if (!codificador.matches(senha, administrador.getSenhaHash())) {
             administrador.registrarFalha(agora);
-            auditoria.registrar(entrada.comFalha(
-                    administrador.bloqueado(agora) ? "Senha incorreta; conta bloqueada" : "Senha incorreta"));
-            throw new ErroDeNegocio(CREDENCIAIS_INVALIDAS);
+            return Verificacao.recusada(
+                    entrada.comFalha(
+                            administrador.bloqueado(agora) ? "Senha incorreta; conta bloqueada" : "Senha incorreta"),
+                    CREDENCIAIS_INVALIDAS);
         }
         administrador.registrarAcesso(agora);
-        auditoria.registrar(entrada);
-        return sessoes.entrarComoAdministrador(administrador.getId());
+        return new Verificacao(entrada, null, administrador.getId());
+    }
+
+    private record Verificacao(OcorrenciaDeAuditoria ocorrencia, String recusa, Long administradorId) {
+
+        static Verificacao recusada(OcorrenciaDeAuditoria ocorrencia, String recusa) {
+            return new Verificacao(ocorrencia, recusa, null);
+        }
     }
 }

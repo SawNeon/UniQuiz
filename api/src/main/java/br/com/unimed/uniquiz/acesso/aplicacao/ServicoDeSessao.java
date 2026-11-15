@@ -73,7 +73,6 @@ public class ServicoDeSessao {
         return LIMITES_DO_PAINEL.duracao();
     }
 
-    @Transactional(noRollbackFor = ErroDeNegocio.class)
     public EntradaDoColaborador entrarComoColaborador(Long colaboradorId, String pin, boolean aparelhoCompartilhado) {
         OcorrenciaDeAuditoria entrada =
                 OcorrenciaDeAuditoria.de(TipoDeAtor.COLABORADOR, colaboradorId, AcaoAuditada.ENTRADA_DO_COLABORADOR);
@@ -138,7 +137,6 @@ public class ServicoDeSessao {
                         administrador.isPrecisaTrocarSenha()));
     }
 
-    @Transactional
     public void encerrar(String token) {
         sessoes.findById(Tokens.hash(token)).ifPresent(sessao -> {
             sessoes.delete(sessao);
