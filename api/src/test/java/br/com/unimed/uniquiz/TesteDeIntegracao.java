@@ -10,6 +10,7 @@ import jakarta.servlet.http.Cookie;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -138,6 +139,38 @@ public abstract class TesteDeIntegracao {
                 .andReturn()
                 .getResponse()
                 .getCookie("uniquiz_admin");
+    }
+
+    protected Cookie entrarNoPainelComo(String usuario, String perfil, Set<Long> setores) throws Exception {
+        String provisoria = pedir(
+                        comJson(
+                                post("/api/admin/usuarios").cookie(entrarComoAdmin()),
+                                Map.of(
+                                        "nome",
+                                        "Pessoa " + usuario,
+                                        "usuario",
+                                        usuario,
+                                        "perfil",
+                                        perfil,
+                                        "setores",
+                                        setores)),
+                        status().isCreated())
+                .get("senha")
+                .asText();
+        Cookie sessao = mvc.perform(comJson(post("/api/admin/login"), Map.of("usuario", usuario, "senha", provisoria)))
+                .andExpect(status().isNoContent())
+                .andReturn()
+                .getResponse()
+                .getCookie("uniquiz_admin");
+        mvc.perform(comJson(
+                        post("/api/admin/minha-conta/senha").cookie(sessao),
+                        Map.of("senhaAtual", provisoria, "novaSenha", "uma frase longa de teste")))
+                .andExpect(status().isNoContent());
+        return sessao;
+    }
+
+    protected long idDoSetor(String nome) {
+        return jdbc.queryForObject("SELECT id FROM setor WHERE nome = ?", Long.class, nome);
     }
 
     protected JsonNode pedir(MockHttpServletRequestBuilder pedido, ResultMatcher esperado) throws Exception {
