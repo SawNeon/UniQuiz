@@ -11,9 +11,9 @@ O pedido foi montar relatórios e auditoria no painel admin, mas antes "um siste
 | 1 | Perfis do painel e gestão de usuários | Pronta (`a27574b`) |
 | 2 | Segurança do login, sessões e tela de auditoria | Pronta (`a367e35`) |
 | 3 | Entrada do colaborador | Pronta (`e818ffe`) |
-| 4 | Relatórios respeitando os perfis | **A fazer** |
+| 4 | Relatórios respeitando os perfis | Pronta (API em `2ed6dbd`, tela na sequência) |
 
-A KRATOS (homologação) ainda não recebeu nada disso: tudo foi verificado só localmente.
+As quatro etapas estão prontas e todos os testes de integração rodaram com Docker. O próximo passo é publicar na KRATOS (homologação), que ainda não recebeu nada disso: tudo foi verificado só localmente.
 
 ## O que já existe
 
@@ -40,7 +40,16 @@ A KRATOS (homologação) ainda não recebeu nada disso: tudo foi verificado só 
 - `rotas.tsx`: `telaProtegida(caminho, permissao, carregar)` protege cada tela.
 - Telas novas: `TelaDeUsuarios`, `TelaDeMinhaConta`, `TelaDeAuditoria`; entrada do colaborador em `recursos/acesso/TelaDeEntrada.tsx`.
 
-## Etapa 4: relatórios (plano aprovado)
+**Relatórios** (`api/.../relatorio/` e `web/src/recursos/admin/TelaDeRelatorios.tsx`)
+- `GET /api/admin/relatorios/filtros`, `/conformidade`, `/conformidade/pessoas`, `/desempenho`, `/engajamento` exigem `VER_RELATORIOS`; `/{relatorio}/exportar?formato=CSV|XLSX` exige `EXPORTAR_RELATORIOS`.
+- `ConsultasDeRelatorios` filtra pelo setor no próprio SQL (`setor_id IN (:setoresDoEscopo)`), sem listas grandes de ids: o SQL Server aceita no máximo 2100 parâmetros.
+- Setor fora do escopo do gestor responde 404. Período invertido ou maior que 366 dias e semanas fora de 1 a 52 respondem 422.
+- A calibração só avalia desafios com 10 primeiras respostas ou mais. Uma tentativa em andamento há mais de 1 dia conta como abandono.
+- `ServicoDeExportacao` registra `RELATORIO_EXPORTADO` com o relatório, o formato, o número de linhas e os filtros. No XLSX todo texto é gravado como texto, nunca como fórmula.
+
+**Cuidado com a auditoria**: `ServicoDeAuditoria.registrar` usa `REQUIRES_NEW` e pega uma segunda conexão. Não chamar dentro de outra transação que segure trava, ou o pool se esgota sob carga (foi o que derrubava o `PinTest`). Registrar depois de terminar a transação, como em `ServicoDeLoginAdmin.entrar`.
+
+## Etapa 4: relatórios (feita)
 
 1. **Conformidade**: visão geral, por setor e por pessoa (quem concluiu cada módulo/lição, quem não começou).
 2. **Exportação CSV/Excel**: escapar células que começam com `=`, `+`, `-`, `@` (injeção de fórmula) e registrar `RELATORIO_EXPORTADO` na auditoria.
@@ -50,11 +59,11 @@ A KRATOS (homologação) ainda não recebeu nada disso: tudo foi verificado só 
 6. Não há biblioteca de gráficos no web: usar barras em CSS/SVG.
 7. Ao terminar, a seção "Relatórios" entra em `SECOES_DO_PAINEL` (antes de Auditoria) com `VER_RELATORIOS`, e vira a primeira tela do Gestor e do Auditor.
 
-## Pendências pequenas
+## Pendências pequenas (resolvidas)
 
-- O Administrador ainda não vê a lista de sessões de outro usuário (só "Encerrar sessões").
-- O registro de "Criou um usuário do painel" não guarda o login criado como alvo.
-- Os testes de integração novos (`AcessoDoPainelTest`, `SessoesEAuditoriaTest`, `EntradaDoColaboradorTest`) e o `PinTest` ajustado **ainda não rodaram**: precisam de Docker (Testcontainers). Rodar numa máquina com Docker ou conferir no CI.
+- O Administrador vê as sessões abertas de outro usuário em "Ver sessões" (`GET /api/admin/usuarios/{usuarioId}/sessoes`).
+- "Criou um usuário do painel" guarda o login e o id criados como alvo; se a criação for recusada, guarda o login pedido. O controlador informa o alvo pelo atributo `CatalogoDeRotas.ATRIBUTO_DO_ALVO`.
+- Os testes de integração rodaram com Docker. O `PinTest` travava por esgotamento do pool (ver "Cuidado com a auditoria"), corrigido em `7d5ab18`.
 
 ## Como rodar em outra máquina
 

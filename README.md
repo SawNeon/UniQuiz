@@ -37,6 +37,8 @@ Você precisa de JDK 21, Node 22 ou mais novo e Docker. O Maven vem pelo wrapper
 
 No painel, em Colaboradores, dá para cadastrar uma pessoa avulsa (nome, empresa, setor e, se quiser, o PIN de 3 números; sem PIN, a pessoa cria o dela no primeiro acesso), importar a planilha do RH e redefinir o PIN de quem esqueceu (a pessoa cria outro no próximo acesso). Tudo fica no SQL Server; o PIN é guardado só como hash, e 5 erros seguidos bloqueiam a pessoa por 15 minutos.
 
+O painel tem três perfis: **Administrador** (faz tudo), **Gestor** (vê e exporta os relatórios só dos setores atribuídos) e **Auditor** (vê e exporta todos os relatórios e o registro de auditoria). Em **Relatórios** ficam a conformidade (quem concluiu cada módulo, por setor e por pessoa), o desempenho (acerto na primeira resposta, abandono, erro mais comum e calibração da dificuldade) e o engajamento semanal, com exportação em CSV ou Excel.
+
 A documentação da API fica em `http://localhost:8080/api/docs/ui` no perfil `dev`.
 
 ### Formatação
@@ -115,6 +117,8 @@ No painel, em **Colaboradores**, envie um `.xlsx` ou `.csv` com as colunas `nome
 - A proteção contra CSRF está desligada porque a API só aceita JSON, os cookies são `SameSite=Lax` e o site é servido na mesma origem.
 - Há limite de requisições por IP. Na rede interna, muitas máquinas podem sair pelo mesmo IP, então o limite geral é folgado (300 por minuto). Ajuste se precisar.
 - O texto do admin é exibido como texto simples ou Markdown limitado, sem HTML.
+- Toda alteração feita no painel e toda exportação de relatório ficam no registro de auditoria, que o banco não deixa alterar nem apagar.
+- Nas exportações, células que começam com `=`, `+`, `-`, `@`, tabulação ou quebra de linha recebem um `'` na frente, para o Excel não as executar como fórmula.
 - A tela de entrada informa o que é guardado e para quê, como pede a LGPD.
 
 ## Publicação
