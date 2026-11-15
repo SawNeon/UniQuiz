@@ -28,6 +28,7 @@ export const chavesAdmin = {
   temporadas: ["admin", "temporadas"] as const,
   usuarios: ["admin", "usuarios"] as const,
   setoresDoPainel: ["admin", "usuarios", "setores"] as const,
+  sessoesDoUsuario: (usuarioId: number) => ["admin", "usuarios", usuarioId, "sessoes"] as const,
   minhasSessoes: ["admin", "minha-conta", "sessoes"] as const,
   auditoria: (filtro: FiltroDeAuditoria) => ["admin", "auditoria", filtro] as const,
   alertas: ["admin", "auditoria", "alertas"] as const,
@@ -147,6 +148,13 @@ export function useAcaoSobreUsuario() {
     ({ id, acao }: { id: number; acao: AcaoSobreUsuario }) => api.post(`/admin/usuarios/${id}/${acao}`),
     [chavesAdmin.usuarios, chavesAdmin.alertas],
   );
+}
+
+export function useSessoesDoUsuario(usuarioId: number) {
+  return useQuery({
+    queryKey: chavesAdmin.sessoesDoUsuario(usuarioId),
+    queryFn: () => api.get<SessaoAtiva[]>(`/admin/usuarios/${usuarioId}/sessoes`),
+  });
 }
 
 export function useRedefinirSenhaDoUsuario() {

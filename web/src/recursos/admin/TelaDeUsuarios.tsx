@@ -8,6 +8,7 @@ import {
   useCriarUsuarioDoPainel,
   useEditarUsuarioDoPainel,
   useRedefinirSenhaDoUsuario,
+  useSessoesDoUsuario,
   useSetoresDoPainel,
   useUsuariosDoPainel,
 } from "../../api/admin";
@@ -95,6 +96,7 @@ function LinhaDoUsuario({
   const acao = useAcaoSobreUsuario();
   const redefinir = useRedefinirSenhaDoUsuario();
   const souEu = usuario.id === conta.id;
+  const [vendoSessoes, setVendoSessoes] = useState(false);
   const nomesDosSetores = setores
     .filter((setor) => usuario.setores.includes(setor.id))
     .map((setor) => setor.nome);
@@ -161,6 +163,14 @@ function LinhaDoUsuario({
             </Botao>
             <Botao
               variante="secundario"
+              aria-expanded={vendoSessoes}
+              aria-controls={`sessoes-do-usuario-${usuario.id}`}
+              onClick={() => setVendoSessoes(!vendoSessoes)}
+            >
+              {vendoSessoes ? "Esconder sessões" : "Ver sessões"}
+            </Botao>
+            <Botao
+              variante="secundario"
               onClick={() =>
                 executar("encerrar-sessoes", `Desconectar ${usuario.nome} de todos os aparelhos?`)
               }
@@ -184,8 +194,32 @@ function LinhaDoUsuario({
           </>
         )}
       </div>
+      {vendoSessoes && <SessoesDoUsuario usuarioId={usuario.id} />}
       {(acao.error ?? redefinir.error) && <MensagemDeErro erro={acao.error ?? redefinir.error} />}
     </li>
+  );
+}
+
+function SessoesDoUsuario({ usuarioId }: { usuarioId: number }) {
+  const sessoes = useSessoesDoUsuario(usuarioId);
+
+  return (
+    <div id={`sessoes-do-usuario-${usuarioId}`} className="flex flex-col gap-2">
+      {sessoes.isPending && <Carregando />}
+      {sessoes.isError && <MensagemDeErro erro={sessoes.error} />}
+      {sessoes.data?.length === 0 && <p className="text-sm">Nenhuma sessão aberta.</p>}
+      {sessoes.data && sessoes.data.length > 0 && (
+        <ul className="flex flex-col gap-1 text-sm">
+          {sessoes.data.map((sessao) => (
+            <li key={sessao.id} className="rounded-lg bg-white p-2">
+              <span className="font-bold">{sessao.dispositivo ?? "Aparelho desconhecido"}</span>
+              {sessao.ip ? ` · IP ${sessao.ip}` : ""} · Entrou em {formatarMomento(sessao.criadaEm)} · Último
+              uso em {formatarMomento(sessao.ultimoUsoEm)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

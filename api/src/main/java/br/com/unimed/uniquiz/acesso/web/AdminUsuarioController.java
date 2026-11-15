@@ -1,13 +1,16 @@
 package br.com.unimed.uniquiz.acesso.web;
 
+import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeSessao.SessaoAtiva;
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel;
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel.DadosDoUsuario;
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel.SenhaProvisoria;
 import br.com.unimed.uniquiz.acesso.aplicacao.ServicoDeUsuariosDoPainel.UsuarioDoPainel;
 import br.com.unimed.uniquiz.acesso.aplicacao.UsuarioLogado;
 import br.com.unimed.uniquiz.acesso.dominio.PerfilDoPainel;
+import br.com.unimed.uniquiz.auditoria.dominio.CatalogoDeRotas;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores.ItemDaLista;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -58,8 +61,20 @@ class AdminUsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    SenhaProvisoria criar(@Valid @RequestBody PedidoDeCriacao pedido) {
-        return usuarios.criar(pedido.usuario(), dados(pedido.nome(), pedido.perfil(), pedido.setores()));
+    SenhaProvisoria criar(@Valid @RequestBody PedidoDeCriacao pedido, HttpServletRequest requisicao) {
+        requisicao.setAttribute(
+                CatalogoDeRotas.ATRIBUTO_DO_ALVO, "usuario=" + pedido.usuario().strip());
+        SenhaProvisoria criada =
+                usuarios.criar(pedido.usuario(), dados(pedido.nome(), pedido.perfil(), pedido.setores()));
+        requisicao.setAttribute(
+                CatalogoDeRotas.ATRIBUTO_DO_ALVO,
+                "usuario=%s, usuarioId=%d".formatted(criada.usuario(), criada.usuarioId()));
+        return criada;
+    }
+
+    @GetMapping("/{usuarioId}/sessoes")
+    List<SessaoAtiva> sessoes(@PathVariable Long usuarioId) {
+        return usuarios.sessoes(usuarioId);
     }
 
     @PutMapping("/{usuarioId}")

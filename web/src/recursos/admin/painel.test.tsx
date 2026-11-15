@@ -112,7 +112,7 @@ describe("InicioDoPainel e ExigePermissao", () => {
     simularApi({});
     renderizar(comConta(auditor, <InicioDoPainel />), { rota: "/admin", caminho: "/admin" });
 
-    expect(await screen.findByText("Página: /admin/auditoria")).toBeInTheDocument();
+    expect(await screen.findByText("Página: /admin/relatorios")).toBeInTheDocument();
   });
 
   it("explica quando o perfil não abre a área", () => {
@@ -321,6 +321,53 @@ describe("TelaDeUsuarios", () => {
       "/admin/usuarios/3/encerrar-sessoes",
     ]);
     expect(confirmar).toHaveBeenCalledTimes(3);
+  });
+
+  it("mostra as sessões abertas de outro usuário e atualiza depois de encerrar", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    let sessoesDoGil: SessaoAtiva[] = [
+      {
+        id: "eeee5555ffff6666",
+        criadaEm: "2026-11-13T08:00:00Z",
+        ultimoUsoEm: "2026-11-13T08:20:00Z",
+        ip: "10.0.0.7",
+        dispositivo: "Edge no Windows",
+        atual: false,
+      },
+      {
+        id: "gggg7777hhhh8888",
+        criadaEm: "2026-11-12T08:00:00Z",
+        ultimoUsoEm: "2026-11-12T08:20:00Z",
+        atual: false,
+      },
+    ];
+    rotasDaTela({
+      "GET /admin/usuarios/3/sessoes": () => ({ corpo: sessoesDoGil }),
+      "POST /admin/usuarios/3/encerrar-sessoes": () => {
+        sessoesDoGil = [];
+        return {};
+      },
+    });
+    renderizar(comConta(administrador, <TelaDeUsuarios />));
+
+    const gil = await screen.findByRole("listitem", { name: "Gil Gestor" });
+    const ver = within(gil).getByRole("button", { name: "Ver sessões" });
+    expect(ver).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(ver);
+
+    expect(await within(gil).findByText("Edge no Windows")).toBeInTheDocument();
+    expect(within(gil).getByText(/IP 10\.0\.0\.7/)).toBeInTheDocument();
+    expect(within(gil).getByText("Aparelho desconhecido")).toBeInTheDocument();
+    expect(within(gil).getByRole("button", { name: "Esconder sessões" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+
+    await userEvent.click(within(gil).getByRole("button", { name: "Encerrar sessões" }));
+    expect(await within(gil).findByText("Nenhuma sessão aberta.")).toBeInTheDocument();
+
+    await userEvent.click(within(gil).getByRole("button", { name: "Esconder sessões" }));
+    expect(within(gil).queryByText("Nenhuma sessão aberta.")).not.toBeInTheDocument();
   });
 
   it("edita o perfil sem mudar o login e mostra a recusa do servidor", async () => {

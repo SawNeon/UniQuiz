@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 public final class CatalogoDeRotas {
 
+    public static final String ATRIBUTO_DO_ALVO = "uniquiz.auditoria.alvo";
+
     private static final Map<String, AcaoAuditada> ACOES = Map.ofEntries(
             entry("POST /api/admin/modulos", AcaoAuditada.MODULO_CRIADO),
             entry("PUT /api/admin/modulos/{moduloId}", AcaoAuditada.MODULO_EDITADO),

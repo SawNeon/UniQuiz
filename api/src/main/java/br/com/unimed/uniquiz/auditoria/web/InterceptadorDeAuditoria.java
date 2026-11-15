@@ -41,7 +41,7 @@ class InterceptadorDeAuditoria implements HandlerInterceptor {
                         usuario.map(ignorado -> TipoDeAtor.ADMINISTRADOR).orElse(TipoDeAtor.ANONIMO),
                         usuario.map(UsuarioLogado::id).orElse(null),
                         CatalogoDeRotas.acaoDa(metodo, rotaModelo.toString()))
-                .comAlvo(CatalogoDeRotas.alvoDe(variaveisDaRota(requisicao)));
+                .comAlvo(alvo(requisicao));
         auditoria.registrar(falhou(resposta, erro) ? ocorrencia.comFalha(motivo(resposta, erro)) : ocorrencia);
     }
 
@@ -51,6 +51,13 @@ class InterceptadorDeAuditoria implements HandlerInterceptor {
 
     private static String motivo(HttpServletResponse resposta, Exception erro) {
         return erro != null ? erro.getClass().getSimpleName() : "HTTP " + resposta.getStatus();
+    }
+
+    private static String alvo(HttpServletRequest requisicao) {
+        if (requisicao.getAttribute(CatalogoDeRotas.ATRIBUTO_DO_ALVO) instanceof String alvoInformado) {
+            return alvoInformado;
+        }
+        return CatalogoDeRotas.alvoDe(variaveisDaRota(requisicao));
     }
 
     @SuppressWarnings("unchecked")

@@ -155,6 +155,12 @@ public class ServicoDeUsuariosDoPainel {
         sessoes.encerrarTodasDoAdministrador(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<ServicoDeSessao.SessaoAtiva> sessoes(Long id) {
+        buscar(id);
+        return sessoes.sessoesDoAdministrador(id, null);
+    }
+
     private void exigirQueNaoTireOUltimoAdministrador(
             Administrador alvo, Long quemAltera, String descricaoDaAcaoSobreSiMesmo) {
         if (alvo.getId().equals(quemAltera)) {

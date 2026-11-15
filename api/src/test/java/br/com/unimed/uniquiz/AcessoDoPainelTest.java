@@ -194,8 +194,55 @@ class AcessoDoPainelTest extends TesteDeIntegracao {
                 "SELECT acao, alvo, resultado, ator_tipo FROM registro_de_auditoria WHERE id > ? AND acao = ?",
                 antes,
                 "USUARIO_DO_PAINEL_CRIADO");
-        assertThat(registro).containsEntry("resultado", "SUCESSO").containsEntry("ator_tipo", "ADMINISTRADOR");
+        assertThat(registro)
+                .containsEntry("resultado", "SUCESSO")
+                .containsEntry("ator_tipo", "ADMINISTRADOR")
+                .containsEntry(
+                        "alvo",
+                        "usuario=auditor.teste, usuarioId="
+                                + criada.get("usuarioId").asLong());
         assertThat(criada.get("senha").asText()).isNotBlank();
+    }
+
+    @Test
+    void criacaoRecusadaGuardaOLoginPedidoComoAlvo() throws Exception {
+        criar("auditor.teste", "AUDITOR", Set.of());
+        long antes = jdbc.queryForObject("SELECT COALESCE(MAX(id), 0) FROM registro_de_auditoria", Long.class);
+
+        mvc.perform(comJson(
+                        post("/api/admin/usuarios").cookie(entrarComoAdmin()),
+                        Map.of("nome", "Repetida", "usuario", " auditor.teste ", "perfil", "AUDITOR")))
+                .andExpect(status().isUnprocessableEntity());
+
+        Map<String, Object> registro = jdbc.queryForMap(
+                "SELECT alvo, resultado FROM registro_de_auditoria WHERE id > ? AND acao = ?",
+                antes,
+                "USUARIO_DO_PAINEL_CRIADO");
+        assertThat(registro).containsEntry("resultado", "FALHA").containsEntry("alvo", "usuario=auditor.teste");
+    }
+
+    @Test
+    void administradorVeAsSessoesDeOutroUsuario() throws Exception {
+        Conta conta = contaPronta("gestor.teste", "GESTOR", Set.of(umSetor()));
+        Cookie admin = entrarComoAdmin();
+
+        mvc.perform(get("/api/admin/usuarios/{id}/sessoes", conta.id()).cookie(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].atual").value(false))
+                .andExpect(jsonPath("$[0].id").isNotEmpty());
+
+        mvc.perform(get("/api/admin/usuarios/{id}/sessoes", conta.id()).cookie(conta.sessao()))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/admin/usuarios/{id}/sessoes", 999_999).cookie(admin))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(post("/api/admin/usuarios/{id}/encerrar-sessoes", conta.id())
+                        .cookie(admin))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/admin/usuarios/{id}/sessoes", conta.id()).cookie(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
