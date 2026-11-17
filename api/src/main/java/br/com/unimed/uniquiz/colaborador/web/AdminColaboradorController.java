@@ -7,6 +7,7 @@ import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeImportacao;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDePin;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.io.IOException;
@@ -32,7 +33,14 @@ class AdminColaboradorController {
             @NotBlank @Size(max = 200) String nome,
             @NotBlank @Size(max = 150) String empresa,
             @NotBlank @Size(max = 150) String setor,
-            @Pattern(regexp = "\\d{3}", message = "O PIN tem 3 números.") String pin) {}
+            @NotNull(message = "Informe o PIN de 3 números.")
+                    @Pattern(regexp = "\\d{3}", message = "O PIN tem 3 números.")
+                    String pin) {}
+
+    record PedidoDePin(
+            @NotNull(message = "Informe o PIN de 3 números.")
+                    @Pattern(regexp = "\\d{3}", message = "O PIN tem 3 números.")
+                    String pin) {}
 
     record PedidoDeAjuste(@NotBlank @Size(max = 200) String nome, boolean ativo) {}
 
@@ -59,8 +67,8 @@ class AdminColaboradorController {
     }
 
     @PostMapping("/{colaboradorId}/redefinir-pin")
-    ResponseEntity<Void> redefinirPin(@PathVariable Long colaboradorId) {
-        pins.redefinir(colaboradorId);
+    ResponseEntity<Void> redefinirPin(@PathVariable Long colaboradorId, @Valid @RequestBody PedidoDePin pedido) {
+        pins.definir(colaboradorId, pedido.pin());
         return ResponseEntity.noContent().build();
     }
 

@@ -12,7 +12,6 @@ import br.com.unimed.uniquiz.auditoria.dominio.OcorrenciaDeAuditoria;
 import br.com.unimed.uniquiz.auditoria.dominio.TipoDeAtor;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDeColaboradores;
 import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDePin;
-import br.com.unimed.uniquiz.colaborador.aplicacao.ServicoDePin.ResultadoDoPin;
 import br.com.unimed.uniquiz.comum.ErroDeNegocio;
 import br.com.unimed.uniquiz.comum.OrigemDaRequisicao;
 import br.com.unimed.uniquiz.comum.PropriedadesDoUniQuiz;
@@ -20,7 +19,6 @@ import br.com.unimed.uniquiz.comum.RecursoNaoEncontrado;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -76,9 +74,8 @@ public class ServicoDeSessao {
     public EntradaDoColaborador entrarComoColaborador(Long colaboradorId, String pin, boolean aparelhoCompartilhado) {
         OcorrenciaDeAuditoria entrada =
                 OcorrenciaDeAuditoria.de(TipoDeAtor.COLABORADOR, colaboradorId, AcaoAuditada.ENTRADA_DO_COLABORADOR);
-        ResultadoDoPin resultado;
         try {
-            resultado = pins.verificarOuCriar(colaboradorId, pin);
+            pins.verificar(colaboradorId, pin);
         } catch (ErroDeNegocio erro) {
             auditoria.registrar(entrada.comFalha(erro.getMessage()));
             throw erro;
@@ -87,19 +84,8 @@ public class ServicoDeSessao {
         String token = Tokens.novo();
         sessoes.save(
                 Sessao.deColaborador(Tokens.hash(token), colaboradorId, relogio.instant(), limites, origemAtual()));
-        auditoria.registrar(entrada.comDetalhe(detalheDaEntrada(resultado, aparelhoCompartilhado)));
+        auditoria.registrar(entrada.comDetalhe(aparelhoCompartilhado ? "Aparelho compartilhado" : null));
         return new EntradaDoColaborador(token, limites.duracao());
-    }
-
-    private static String detalheDaEntrada(ResultadoDoPin resultado, boolean aparelhoCompartilhado) {
-        List<String> detalhes = new ArrayList<>();
-        if (resultado == ResultadoDoPin.PIN_CRIADO) {
-            detalhes.add("Primeiro acesso: PIN criado");
-        }
-        if (aparelhoCompartilhado) {
-            detalhes.add("Aparelho compartilhado");
-        }
-        return detalhes.isEmpty() ? null : String.join("; ", detalhes);
     }
 
     @Transactional

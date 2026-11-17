@@ -86,30 +86,40 @@ describe("TelaDeEntrada", () => {
     ]);
   });
 
-  it("no primeiro acesso pede o PIN duas vezes e só aceita números", async () => {
+  it("quem ainda não tem PIN não cria um: é orientado a procurar o administrador", async () => {
     const chamadas = apiDaEntrada();
     renderizar(<TelaDeEntrada />, { rota: "/entrar", caminho: "/entrar" });
     await escolherSetor();
     await buscar("ana");
     await userEvent.click(await screen.findByRole("button", { name: "Ana Exemplo" }));
 
-    expect(screen.getByText(/primeiro acesso/)).toBeInTheDocument();
-    const campo = screen.getByLabelText("Crie o seu PIN");
-    const repeticao = screen.getByLabelText("Repita o PIN");
-    const botao = screen.getByRole("button", { name: "Sim, sou eu" });
+    expect(
+      screen.getByRole("heading", { name: "Ana Exemplo, o seu PIN ainda não foi cadastrado" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Procure o administrador do UniQuiz/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("PIN")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sim, sou eu" })).not.toBeInTheDocument();
 
+    await userEvent.click(screen.getByRole("button", { name: "Voltar" }));
+    expect(await screen.findByRole("button", { name: "Ana Exemplo" })).toBeInTheDocument();
+    expect(chamadas.filter((chamada) => chamada.metodo === "POST")).toHaveLength(0);
+  });
+
+  it("o PIN só aceita números e entra em aparelho compartilhado", async () => {
+    const chamadas = apiDaEntrada();
+    renderizar(<TelaDeEntrada />, { rota: "/entrar", caminho: "/entrar" });
+    await escolherSetor();
+    await buscar("bru");
+    await userEvent.click(await screen.findByRole("button", { name: "Bruno Teste" }));
+
+    const campo = screen.getByLabelText("PIN");
+    const botao = screen.getByRole("button", { name: "Sim, sou eu" });
     await userEvent.type(campo, "a1b2");
     expect(campo).toHaveValue("12");
+    expect(botao).toBeDisabled();
     await userEvent.type(campo, "3456");
     expect(campo).toHaveValue("123");
-    expect(botao).toBeDisabled();
 
-    await userEvent.type(repeticao, "124");
-    expect(screen.getByRole("alert")).toHaveTextContent("Os dois PINs precisam ser iguais.");
-    expect(botao).toBeDisabled();
-
-    await userEvent.clear(repeticao);
-    await userEvent.type(repeticao, "123");
     await userEvent.click(screen.getByRole("checkbox", { name: /aparelho compartilhado/ }));
     await userEvent.click(botao);
 
@@ -117,7 +127,7 @@ describe("TelaDeEntrada", () => {
     expect(chamadas).toContainEqual({
       metodo: "POST",
       caminho: "/sessao",
-      corpo: { colaboradorId: 3, pin: "123", aparelhoCompartilhado: true },
+      corpo: { colaboradorId: 4, pin: "123", aparelhoCompartilhado: true },
     });
   });
 

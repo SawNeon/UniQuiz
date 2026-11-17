@@ -25,56 +25,94 @@ class PinTest extends TesteDeIntegracao {
         return Map.of("colaboradorId", idDoColaborador(nome), "pin", pin);
     }
 
-    @Test
-    void primeiroAcessoCriaOPinEGuardaSoOHash() throws Exception {
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
-
-        String hash =
-                jdbc.queryForObject("SELECT pin_hash FROM colaborador WHERE nome = ?", String.class, "Ana Exemplo");
-        assertThat(hash).isNotBlank().doesNotContain("482");
+    private void definirPin(String nome, String pin) throws Exception {
+        mvc.perform(comJson(
+                        post("/api/admin/colaboradores/{id}/redefinir-pin", idDoColaborador(nome))
+                                .cookie(entrarComoAdmin()),
+                        Map.of("pin", pin)))
+                .andExpect(status().isNoContent());
     }
 
     @Test
-    void depoisDoPrimeiroAcessoPrecisaDoMesmoPin() throws Exception {
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
+    void entraComOPinCadastradoEOBancoGuardaSoOHash() throws Exception {
+        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", PIN_DE_TESTE)))
+                .andExpect(status().isNoContent());
 
+        String hash =
+                jdbc.queryForObject("SELECT pin_hash FROM colaborador WHERE nome = ?", String.class, "Ana Exemplo");
+        assertThat(hash).isNotBlank().doesNotContain(PIN_DE_TESTE);
+    }
+
+    @Test
+    void primeiroAcessoNaoCriaPin() throws Exception {
+        jdbc.update("UPDATE colaborador SET pin_hash = NULL WHERE nome = ?", "Ana Exemplo");
+
+        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482")))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail")
+                        .value("O seu PIN ainda não foi cadastrado. Procure o administrador do UniQuiz."));
+
+        assertThat(jdbc.queryForObject("SELECT pin_hash FROM colaborador WHERE nome = ?", String.class, "Ana Exemplo"))
+                .isNull();
+    }
+
+    @Test
+    void pinErradoNaoEntra() throws Exception {
         mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "111")))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.detail").value("PIN incorreto."));
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
+        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", PIN_DE_TESTE)))
+                .andExpect(status().isNoContent());
     }
 
     @Test
     void listaDaEntradaDizSeAPessoaJaTemPin() throws Exception {
         long setor = jdbc.queryForObject("SELECT setor_id FROM colaborador WHERE nome = ?", Long.class, "Ana Exemplo");
         mvc.perform(get("/api/setores/{id}/colaboradores", setor).param("busca", "ana"))
-                .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(false));
+                .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(true));
 
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
+        jdbc.update("UPDATE colaborador SET pin_hash = NULL WHERE nome = ?", "Ana Exemplo");
 
         mvc.perform(get("/api/setores/{id}/colaboradores", setor).param("busca", "ana"))
-                .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(true));
+                .andExpect(jsonPath("$[?(@.nome == 'Ana Exemplo')].temPin").value(false));
     }
 
     @Test
-    void bloqueiaDepoisDeCincoPinsErradosEOAdminDestrava() throws Exception {
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
+    void bloqueiaDepoisDeCincoPinsErradosEOAdminDefineOutro() throws Exception {
         for (int tentativa = 0; tentativa < 5; tentativa++) {
             mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "000")))
                     .andExpect(status().isUnprocessableEntity());
         }
 
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482")))
+        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", PIN_DE_TESTE)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.detail").value(containsString("bloqueado")));
 
-        mvc.perform(post("/api/admin/colaboradores/{id}/redefinir-pin", idDoColaborador("Ana Exemplo"))
-                        .cookie(entrarComoAdmin()))
-                .andExpect(status().isNoContent());
+        definirPin("Ana Exemplo", "777");
 
         mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "777"))).andExpect(status().isNoContent());
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482")))
+        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", PIN_DE_TESTE)))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"12", "1234", "abc", "1 2", ""})
+    void adminSoDefinePinDeTresNumeros(String pin) throws Exception {
+        mvc.perform(comJson(
+                        post("/api/admin/colaboradores/{id}/redefinir-pin", idDoColaborador("Ana Exemplo"))
+                                .cookie(entrarComoAdmin()),
+                        Map.of("pin", pin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.pin").exists());
+    }
+
+    @Test
+    void definirPinDeQuemNaoExisteDa404() throws Exception {
+        mvc.perform(comJson(
+                        post("/api/admin/colaboradores/{id}/redefinir-pin", 999_999)
+                                .cookie(entrarComoAdmin()),
+                        Map.of("pin", "321")))
+                .andExpect(status().isNotFound());
     }
 
     @ParameterizedTest
@@ -87,8 +125,6 @@ class PinTest extends TesteDeIntegracao {
 
     @Test
     void chutesEmParaleloNaoPassamDoLimiteDeCincoErros() throws Exception {
-        mvc.perform(comJson(post("/api/sessao"), entrada("Ana Exemplo", "482"))).andExpect(status().isNoContent());
-
         ExecutorService pool = Executors.newFixedThreadPool(30);
         try {
             List<Future<String>> respostas = IntStream.range(0, 60)
@@ -117,34 +153,21 @@ class PinTest extends TesteDeIntegracao {
     }
 
     @Test
-    void adminCadastraColaboradorNovoCriandoOSetorQueFalta() throws Exception {
-        Cookie admin = entrarComoAdmin();
-
-        pedir(
+    void adminCadastraColaboradorComPinCriandoOSetorQueFalta() throws Exception {
+        JsonNode cadastrado = pedir(
                 comJson(
-                        post("/api/admin/colaboradores").cookie(admin),
-                        Map.of("nome", "Diego Novo", "empresa", "Unimed Exemplo", "setor", "Financeiro")),
+                        post("/api/admin/colaboradores").cookie(entrarComoAdmin()),
+                        Map.of("nome", "Diego Novo", "empresa", "Unimed Exemplo", "setor", "Financeiro", "pin", "909")),
                 status().isCreated());
 
+        assertThat(cadastrado.get("temPin").asBoolean()).isTrue();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM empresa WHERE nome = ?", Integer.class, "Unimed Exemplo"))
                 .isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM setor WHERE nome = ?", Integer.class, "Financeiro"))
                 .isEqualTo(1);
-        mvc.perform(comJson(post("/api/sessao"), entrada("Diego Novo", "909"))).andExpect(status().isNoContent());
-    }
-
-    @Test
-    void cadastroComPinJaPermiteEntrarComEle() throws Exception {
-        JsonNode cadastrado = pedir(
-                comJson(
-                        post("/api/admin/colaboradores").cookie(entrarComoAdmin()),
-                        Map.of("nome", "Eva Nova", "empresa", "Unimed Exemplo", "setor", "Financeiro", "pin", "246")),
-                status().isCreated());
-
-        assertThat(cadastrado.get("temPin").asBoolean()).isTrue();
-        mvc.perform(comJson(post("/api/sessao"), entrada("Eva Nova", "000")))
+        mvc.perform(comJson(post("/api/sessao"), entrada("Diego Novo", "000")))
                 .andExpect(status().isUnprocessableEntity());
-        mvc.perform(comJson(post("/api/sessao"), entrada("Eva Nova", "246"))).andExpect(status().isNoContent());
+        mvc.perform(comJson(post("/api/sessao"), entrada("Diego Novo", "909"))).andExpect(status().isNoContent());
     }
 
     @ParameterizedTest
@@ -158,14 +181,12 @@ class PinTest extends TesteDeIntegracao {
     }
 
     @Test
-    void cadastroSemPinSegueComoAntes() throws Exception {
-        JsonNode cadastrado = pedir(
-                comJson(
+    void cadastroExigePin() throws Exception {
+        mvc.perform(comJson(
                         post("/api/admin/colaboradores").cookie(entrarComoAdmin()),
-                        Map.of("nome", "Eva Nova", "empresa", "Unimed Exemplo", "setor", "Financeiro")),
-                status().isCreated());
-
-        assertThat(cadastrado.get("temPin").asBoolean()).isFalse();
+                        Map.of("nome", "Eva Nova", "empresa", "Unimed Exemplo", "setor", "Financeiro")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.pin").value("Informe o PIN de 3 números."));
     }
 
     @Test
@@ -177,15 +198,21 @@ class PinTest extends TesteDeIntegracao {
 
         mvc.perform(comJson(
                         post("/api/admin/colaboradores").cookie(entrarComoAdmin()),
-                        Map.of("nome", "ana exemplo", "empresa", "unimed exemplo", "setor", setor)))
+                        Map.of("nome", "ana exemplo", "empresa", "unimed exemplo", "setor", setor, "pin", "555")))
                 .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
     void cadastroEPinExigemAdmin() throws Exception {
+        Cookie colaborador = entrarComo("Ana Exemplo");
         mvc.perform(comJson(
-                        post("/api/admin/colaboradores").cookie(entrarComo("Ana Exemplo")),
-                        Map.of("nome", "X", "empresa", "Y", "setor", "Z")))
+                        post("/api/admin/colaboradores").cookie(colaborador),
+                        Map.of("nome", "X", "empresa", "Y", "setor", "Z", "pin", "123")))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(comJson(
+                        post("/api/admin/colaboradores/{id}/redefinir-pin", idDoColaborador("Bruno Teste"))
+                                .cookie(colaborador),
+                        Map.of("pin", "123")))
                 .andExpect(status().isUnauthorized());
     }
 }

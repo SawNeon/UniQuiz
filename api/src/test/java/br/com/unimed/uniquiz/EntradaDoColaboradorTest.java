@@ -67,7 +67,9 @@ class EntradaDoColaboradorTest extends TesteDeIntegracao {
                 .andExpect(status().isNoContent())
                 .andExpect(header().string("Set-Cookie", containsString("Max-Age=7200")));
 
-        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", idDoColaborador("Bruno Teste"), "pin", "321")))
+        mvc.perform(comJson(
+                        post("/api/sessao"),
+                        Map.of("colaboradorId", idDoColaborador("Bruno Teste"), "pin", PIN_DE_TESTE)))
                 .andExpect(header().string("Set-Cookie", containsString("Max-Age=2592000")));
     }
 

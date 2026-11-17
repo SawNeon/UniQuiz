@@ -13,10 +13,13 @@ import br.com.unimed.uniquiz.comum.ErroDeNegocio;
 import br.com.unimed.uniquiz.comum.Textos;
 import java.time.Clock;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class ServicoDeImportacao {
     private final EmpresaRepository empresas;
     private final SetorRepository setores;
     private final ColaboradorRepository colaboradores;
+    private final PasswordEncoder codificador;
     private final Clock relogio;
 
     public ServicoDeImportacao(
@@ -34,11 +38,13 @@ public class ServicoDeImportacao {
             EmpresaRepository empresas,
             SetorRepository setores,
             ColaboradorRepository colaboradores,
+            PasswordEncoder codificador,
             Clock relogio) {
         this.leitor = leitor;
         this.empresas = empresas;
         this.setores = setores;
         this.colaboradores = colaboradores;
+        this.codificador = codificador;
         this.relogio = relogio;
     }
 
@@ -60,18 +66,31 @@ public class ServicoDeImportacao {
         setores.findAll()
                 .forEach(setor -> setoresPorNome.put(chaveDoSetor(setor.getEmpresaId(), setor.getNome()), setor));
 
+        Map<String, String> hashes = hashesDosPins(plano);
         for (LinhaDaPlanilha novo : plano.novos()) {
             Empresa empresa = empresasPorNome.computeIfAbsent(
                     Textos.normalizar(novo.empresa()), ignorado -> empresas.save(new Empresa(novo.empresa())));
             Setor setor = setoresPorNome.computeIfAbsent(
                     chaveDoSetor(empresa.getId(), novo.setor()),
                     ignorado -> setores.save(new Setor(empresa.getId(), novo.setor())));
-            colaboradores.save(new Colaborador(empresa.getId(), setor.getId(), novo.nome(), relogio.instant()));
+            Colaborador colaborador = new Colaborador(empresa.getId(), setor.getId(), novo.nome(), relogio.instant());
+            colaborador.definirPin(hashes.get(novo.pin()));
+            colaboradores.save(colaborador);
         }
+        colaboradores
+                .findAllById(plano.pinsDosExistentes().keySet())
+                .forEach(colaborador -> colaborador.definirPin(
+                        hashes.get(plano.pinsDosExistentes().get(colaborador.getId()))));
         colaboradores.findAllById(plano.reativados()).forEach(Colaborador::ativar);
         colaboradores.findAllById(plano.inativados()).forEach(Colaborador::desativar);
 
         return ResumoDaImportacao.de(plano);
+    }
+
+    private Map<String, String> hashesDosPins(PlanoDeImportacao plano) {
+        Set<String> pins = new HashSet<>(plano.pinsDosExistentes().values());
+        plano.novos().forEach(novo -> pins.add(novo.pin()));
+        return pins.parallelStream().collect(Collectors.toMap(Function.identity(), codificador::encode));
     }
 
     private PlanoDeImportacao planejar(String nomeDoArquivo, byte[] conteudo) {

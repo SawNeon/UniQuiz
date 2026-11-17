@@ -164,7 +164,15 @@ class RelatoriosTest extends TesteDeIntegracao {
         pedir(
                 comJson(
                         post("/api/admin/colaboradores").cookie(admin),
-                        Map.of("nome", "=HYPERLINK(\"http://golpe\")", "empresa", "Unimed Exemplo", "setor", TI)),
+                        Map.of(
+                                "nome",
+                                "=HYPERLINK(\"http://golpe\")",
+                                "empresa",
+                                "Unimed Exemplo",
+                                "setor",
+                                TI,
+                                "pin",
+                                "321")),
                 status().isCreated());
         long ultimoRegistroAntes = ultimoRegistroDeAuditoria();
 
@@ -193,7 +201,7 @@ class RelatoriosTest extends TesteDeIntegracao {
         pedir(
                 comJson(
                         post("/api/admin/colaboradores").cookie(admin),
-                        Map.of("nome", "=1+1", "empresa", "Unimed Exemplo", "setor", TI)),
+                        Map.of("nome", "=1+1", "empresa", "Unimed Exemplo", "setor", TI, "pin", "321")),
                 status().isCreated());
 
         byte[] arquivo = mvc.perform(get("/api/admin/relatorios/conformidade-pessoas/exportar?formato=XLSX")

@@ -92,8 +92,9 @@ public class LeitorDePlanilha {
         int colunaNome = cabecalho.indexOf("NOME");
         int colunaSetor = cabecalho.indexOf("SETOR");
         int colunaEmpresa = cabecalho.indexOf("EMPRESA");
-        if (colunaNome < 0 || colunaSetor < 0 || colunaEmpresa < 0) {
-            throw new ErroDeNegocio("A primeira linha precisa ter as colunas nome, setor e empresa.");
+        int colunaPin = cabecalho.indexOf("PIN");
+        if (colunaNome < 0 || colunaSetor < 0 || colunaEmpresa < 0 || colunaPin < 0) {
+            throw new ErroDeNegocio("A primeira linha precisa ter as colunas nome, setor, empresa e pin.");
         }
         return linhas.stream()
                 .skip(1)
@@ -101,7 +102,8 @@ public class LeitorDePlanilha {
                         linha.numero(),
                         celula(linha, colunaNome),
                         celula(linha, colunaSetor),
-                        celula(linha, colunaEmpresa)))
+                        celula(linha, colunaEmpresa),
+                        celula(linha, colunaPin)))
                 .toList();
     }
 

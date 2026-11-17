@@ -5,7 +5,7 @@ import {
   useCadastrarColaborador,
   useColaboradoresAdmin,
   useImportacao,
-  useRedefinirPin,
+  useDefinirPin,
   useZerarPontos,
 } from "../../api/admin";
 import { useEmpresas, useSetores } from "../../api/consultas";
@@ -37,9 +37,14 @@ function Importacao() {
         Importar a planilha do RH
       </h1>
       <p>
-        Envie um arquivo .xlsx ou .csv com as colunas <strong>nome</strong>, <strong>setor</strong> e{" "}
-        <strong>empresa</strong>. Nada é gravado até você confirmar. Quem sair da planilha fica inativo, sem
-        perder os pontos.
+        Envie um arquivo .xlsx ou .csv com as colunas <strong>nome</strong>, <strong>setor</strong>,{" "}
+        <strong>empresa</strong> e <strong>pin</strong>. O PIN tem {TAMANHO_DO_PIN} números e é com ele que a
+        pessoa entra; quem já está cadastrado passa a usar o PIN da planilha. Nada é gravado até você
+        confirmar. Quem sair da planilha fica inativo, sem perder os pontos.
+      </p>
+      <p className="text-sm">
+        Se o Excel apagar o zero do começo (007 vira 7), o UniQuiz completa sozinho. Depois de importar,
+        guarde a planilha com cuidado ou apague a coluna de PIN: ela dá acesso à conta de cada pessoa.
       </p>
       <Campo rotulo="Planilha">
         <input
@@ -75,6 +80,7 @@ function Importacao() {
             <li>Mantidos: {resumo.mantidos}</li>
             <li>Reativados: {resumo.reativados}</li>
             <li>Inativados: {resumo.inativados}</li>
+            <li>PINs definidos: {resumo.pinsDefinidos}</li>
           </ul>
           {[...resumo.problemas, ...resumo.homonimos].map((aviso) => (
             <p key={aviso} className="rounded-xl bg-aviso p-2 text-sm font-bold">
@@ -100,13 +106,13 @@ function Cadastro() {
     )?.id ?? null;
   const setores = useSetores(idDaEmpresa);
   const pinValido = pin === "" || pinCompleto(pin);
-  const pronto = nome.trim() !== "" && empresa.trim() !== "" && setor.trim() !== "" && pinValido;
+  const pronto = nome.trim() !== "" && empresa.trim() !== "" && setor.trim() !== "" && pinCompleto(pin);
 
   function enviar(evento: FormEvent) {
     evento.preventDefault();
     if (pronto) {
       cadastrar.mutate(
-        { nome, empresa, setor, pin: pin || undefined },
+        { nome, empresa, setor, pin },
         {
           onSuccess: () => {
             setNome("");
@@ -124,8 +130,7 @@ function Cadastro() {
       </h2>
       <p>
         Para quem não está na planilha. Escolha uma empresa e um setor que já existem ou digite novos: eles
-        são criados junto. O PIN é opcional: se você informar, a pessoa já entra com ele; se deixar em branco,
-        ela cria o dela no primeiro acesso.
+        são criados junto. Informe o PIN de {TAMANHO_DO_PIN} números que a pessoa vai usar para entrar.
       </p>
       <form className="flex flex-col gap-3" onSubmit={enviar}>
         <Campo rotulo="Nome do colaborador">
@@ -148,7 +153,7 @@ function Cadastro() {
           />
         </Campo>
         <Campo
-          rotulo="PIN do colaborador (opcional)"
+          rotulo="PIN do colaborador"
           erro={pinValido ? undefined : `O PIN tem ${TAMANHO_DO_PIN} números.`}
         >
           <Entrada
@@ -217,7 +222,8 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
   const [nome, setNome] = useState(colaborador.nome);
   const ajustar = useAjustarColaborador();
   const zerar = useZerarPontos();
-  const redefinirPin = useRedefinirPin();
+  const definirPin = useDefinirPin();
+  const [novoPin, setNovoPin] = useState("");
 
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-xl bg-neutro/60 p-3">
@@ -246,18 +252,32 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
       >
         Salvar nome
       </Botao>
-      <span className="text-sm font-bold">{colaborador.temPin ? "PIN criado" : "Sem PIN ainda"}</span>
-      <Botao
-        variante="discreto"
-        disabled={!colaborador.temPin}
-        onClick={() => {
-          if (window.confirm("Apagar o PIN de " + colaborador.nome + "? Ele cria outro no próximo acesso.")) {
-            redefinirPin.mutate(colaborador.id);
+      <span className="text-sm font-bold">
+        {colaborador.temPin ? "Com PIN" : "Sem PIN: não consegue entrar"}
+      </span>
+      <form
+        className="flex items-center gap-2"
+        onSubmit={(evento) => {
+          evento.preventDefault();
+          if (pinCompleto(novoPin)) {
+            definirPin.mutate({ id: colaborador.id, pin: novoPin }, { onSuccess: () => setNovoPin("") });
           }
         }}
       >
-        Redefinir PIN
-      </Botao>
+        <Entrada
+          aria-label={`Novo PIN de ${colaborador.nome}`}
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={TAMANHO_DO_PIN}
+          value={novoPin}
+          className="w-24"
+          onChange={(evento) => setNovoPin(pinDigitado(evento.target.value))}
+        />
+        <Botao type="submit" variante="discreto" disabled={!pinCompleto(novoPin) || definirPin.isPending}>
+          Definir PIN
+        </Botao>
+      </form>
       <Botao
         variante="discreto"
         onClick={() => {
@@ -268,10 +288,10 @@ function LinhaDoColaborador({ colaborador }: { colaborador: ColaboradorParaAdmin
       >
         Zerar pontos
       </Botao>
-      {(ajustar.error ?? zerar.error ?? redefinirPin.error) && (
-        <MensagemDeErro erro={ajustar.error ?? zerar.error ?? redefinirPin.error} />
+      {(ajustar.error ?? zerar.error ?? definirPin.error) && (
+        <MensagemDeErro erro={ajustar.error ?? zerar.error ?? definirPin.error} />
       )}
-      {redefinirPin.isSuccess && <span className="text-sm font-bold">PIN apagado.</span>}
+      {definirPin.isSuccess && <span className="text-sm font-bold">PIN definido.</span>}
       {zerar.isSuccess && <span className="text-sm font-bold">Pontos zerados.</span>}
     </li>
   );

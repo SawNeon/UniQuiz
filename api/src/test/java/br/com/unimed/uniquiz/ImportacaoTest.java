@@ -3,6 +3,7 @@ package br.com.unimed.uniquiz;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,10 +19,10 @@ class ImportacaoTest extends TesteDeIntegracao {
 
     private static final String PLANILHA =
             """
-            nome;setor;empresa
-            Ana Exemplo;Tecnologia da Informação;Unimed Exemplo
-            Bruno Teste;Tecnologia da Informação;Unimed Exemplo
-            Nova Pessoa;Jurídico;Unimed Exemplo
+            nome;setor;empresa;pin
+            Ana Exemplo;Tecnologia da Informação;Unimed Exemplo;123
+            Bruno Teste;Tecnologia da Informação;Unimed Exemplo;456
+            Nova Pessoa;Jurídico;Unimed Exemplo;789
             """;
 
     private Cookie admin;
@@ -38,6 +39,7 @@ class ImportacaoTest extends TesteDeIntegracao {
         assertThat(previa.get("novos").asInt()).isEqualTo(1);
         assertThat(previa.get("mantidos").asInt()).isEqualTo(2);
         assertThat(previa.get("inativados").asInt()).isEqualTo(1);
+        assertThat(previa.get("pinsDefinidos").asInt()).isEqualTo(3);
         assertThat(previa.get("podeConfirmar").asBoolean()).isTrue();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM colaborador", Integer.class))
                 .isEqualTo(3);
@@ -61,8 +63,44 @@ class ImportacaoTest extends TesteDeIntegracao {
     }
 
     @Test
+    void confirmarDefineOPinDaPlanilhaParaNovosEParaQuemJaExiste() throws Exception {
+        enviar("confirmar", "rh.csv", PLANILHA, status().isOk());
+
+        entrarCom("Nova Pessoa", "789", status().isNoContent());
+        entrarCom("Bruno Teste", "456", status().isNoContent());
+        entrarCom("Bruno Teste", PIN_DE_TESTE, status().isUnprocessableEntity());
+        entrarCom("Ana Exemplo", "123", status().isNoContent());
+        assertThat(jdbc.queryForList("SELECT pin_hash FROM colaborador WHERE ativo = 1", String.class))
+                .hasSize(3)
+                .allSatisfy(hash -> assertThat(hash).startsWith("{bcrypt}"));
+    }
+
+    @Test
+    void pinFaltandoOuErradoImpedeAConfirmacao() throws Exception {
+        String semPin =
+                PLANILHA.replace("Nova Pessoa;Jurídico;Unimed Exemplo;789", "Nova Pessoa;Jurídico;Unimed Exemplo;");
+
+        JsonNode previa = enviar("previa", "rh.csv", semPin, status().isOk());
+        assertThat(previa.get("problemas").get(0).asText())
+                .isEqualTo("Linha 4: o PIN de Nova Pessoa precisa ter 3 números.");
+        assertThat(previa.get("podeConfirmar").asBoolean()).isFalse();
+
+        enviar("confirmar", "rh.csv", semPin, status().isUnprocessableEntity());
+        enviar(
+                "previa",
+                "rh.csv",
+                "nome;setor;empresa\nAna Exemplo;TI;Unimed Exemplo\n",
+                status().isUnprocessableEntity());
+    }
+
+    private void entrarCom(String nome, String pin, ResultMatcher esperado) throws Exception {
+        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", idDoColaborador(nome), "pin", pin)))
+                .andExpect(esperado);
+    }
+
+    @Test
     void homonimosEImpedemAConfirmacao() throws Exception {
-        String repetida = PLANILHA + "nova pessoa;JURÍDICO;Unimed Exemplo\n";
+        String repetida = PLANILHA + "nova pessoa;JURÍDICO;Unimed Exemplo;321\n";
 
         JsonNode previa = enviar("previa", "rh.csv", repetida, status().isOk());
         assertThat(previa.get("homonimos")).hasSize(1);

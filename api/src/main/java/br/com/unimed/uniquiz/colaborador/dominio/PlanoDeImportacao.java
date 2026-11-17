@@ -14,6 +14,7 @@ public record PlanoDeImportacao(
         List<Long> reativados,
         int mantidos,
         List<Long> inativados,
+        Map<Long, String> pinsDosExistentes,
         List<String> problemas,
         List<String> homonimos) {
 
@@ -28,6 +29,11 @@ public record PlanoDeImportacao(
             }
             if (linha.incompleta()) {
                 problemas.add("Linha %d: preencha nome, setor e empresa.".formatted(linha.numero()));
+                continue;
+            }
+            if (!linha.pinValido()) {
+                problemas.add("Linha %d: o PIN de %s precisa ter %d números."
+                        .formatted(linha.numero(), linha.nome(), LinhaDaPlanilha.TAMANHO_DO_PIN));
                 continue;
             }
             LinhaDaPlanilha anterior = validas.putIfAbsent(chave(linha.empresa(), linha.setor(), linha.nome()), linha);
@@ -52,6 +58,7 @@ public record PlanoDeImportacao(
 
         List<LinhaDaPlanilha> novos = new ArrayList<>();
         List<Long> reativados = new ArrayList<>();
+        Map<Long, String> pinsDosExistentes = new LinkedHashMap<>();
         Set<Long> presentes = new HashSet<>();
         int mantidos = 0;
         for (Map.Entry<String, LinhaDaPlanilha> valida : validas.entrySet()) {
@@ -61,6 +68,7 @@ public record PlanoDeImportacao(
                 continue;
             }
             presentes.add(existente.id());
+            pinsDosExistentes.put(existente.id(), valida.getValue().pin());
             if (existente.ativo()) {
                 mantidos++;
             } else {
@@ -79,6 +87,7 @@ public record PlanoDeImportacao(
                 List.copyOf(reativados),
                 mantidos,
                 inativados,
+                Map.copyOf(pinsDosExistentes),
                 List.copyOf(problemas),
                 List.copyOf(homonimos));
     }

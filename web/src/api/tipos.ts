@@ -261,6 +261,7 @@ export interface ResumoDaImportacao {
   mantidos: number;
   reativados: number;
   inativados: number;
+  pinsDefinidos: number;
   problemas: string[];
   homonimos: string[];
   podeConfirmar: boolean;

@@ -33,9 +33,9 @@ Você precisa de JDK 21, Node 22 ou mais novo e Docker. O Maven vem pelo wrapper
    cd web && npm install && npm run dev
    ```
 
-5. Abra `http://localhost:5173`. Entre como "Ana Exemplo" ou "Bruno Teste" (dados fictícios): no primeiro acesso a pessoa cria um PIN de 3 números, e nas próximas vezes digita o mesmo PIN. O painel fica em `/admin`, com o usuário `admin` e a senha que você definiu.
+5. Abra `http://localhost:5173`. Entre como "Ana Exemplo" ou "Bruno Teste" (dados fictícios) com o PIN `123`, que o perfil `dev` define para as pessoas de exemplo. O painel fica em `/admin`, com o usuário `admin` e a senha que você definiu.
 
-No painel, em Colaboradores, dá para cadastrar uma pessoa avulsa (nome, empresa, setor e, se quiser, o PIN de 3 números; sem PIN, a pessoa cria o dela no primeiro acesso), importar a planilha do RH e redefinir o PIN de quem esqueceu (a pessoa cria outro no próximo acesso). Tudo fica no SQL Server; o PIN é guardado só como hash, e 5 erros seguidos bloqueiam a pessoa por 15 minutos.
+O colaborador não cria o próprio PIN: ele vem na planilha do RH ou é informado pelo administrador. No painel, em Colaboradores, dá para importar a planilha, cadastrar uma pessoa avulsa (nome, empresa, setor e PIN de 3 números) e definir um PIN novo para quem esqueceu. Quem não tem PIN vê na entrada que precisa procurar o administrador. Tudo fica no SQL Server; o PIN é guardado só como hash, e 5 erros seguidos bloqueiam a pessoa por 15 minutos.
 
 O painel tem três perfis: **Administrador** (faz tudo), **Gestor** (vê e exporta os relatórios só dos setores atribuídos) e **Auditor** (vê e exporta todos os relatórios e o registro de auditoria). Em **Relatórios** ficam a conformidade (quem concluiu cada módulo, por setor e por pessoa), o desempenho (acerto na primeira resposta, abandono, erro mais comum e calibração da dificuldade) e o engajamento semanal, com exportação em CSV ou Excel.
 
@@ -107,7 +107,7 @@ Pontuação, limites de requisições e duração da sessão ficam em `api/src/m
 
 ## Importar a planilha do RH
 
-No painel, em **Colaboradores**, envie um `.xlsx` ou `.csv` com as colunas `nome`, `setor` e `empresa`. A prévia mostra quem entra, quem é mantido, reativado e inativado. Nomes repetidos no mesmo setor e linhas incompletas bloqueiam a confirmação até serem corrigidos. Ninguém é apagado: quem sai da planilha fica inativo e mantém o histórico.
+No painel, em **Colaboradores**, envie um `.xlsx` ou `.csv` com as colunas `nome`, `setor`, `empresa` e `pin` (3 números). A prévia mostra quem entra, quem é mantido, reativado e inativado, e quantos PINs serão definidos. O PIN da planilha vale para todos que estão nela, inclusive quem já estava cadastrado; se o Excel apagar o zero do começo (007 vira 7), o UniQuiz completa. Nomes repetidos no mesmo setor, linhas incompletas e PIN fora do formato bloqueiam a confirmação até serem corrigidos. Como a coluna de PIN dá acesso às contas, guarde a planilha com cuidado depois de importar. Ninguém é apagado: quem sai da planilha fica inativo e mantém o histórico.
 
 ## Segurança
 

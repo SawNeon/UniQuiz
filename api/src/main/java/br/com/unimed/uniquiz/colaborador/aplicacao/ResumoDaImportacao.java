@@ -8,6 +8,7 @@ public record ResumoDaImportacao(
         int mantidos,
         int reativados,
         int inativados,
+        int pinsDefinidos,
         List<String> problemas,
         List<String> homonimos,
         boolean podeConfirmar) {
@@ -18,6 +19,7 @@ public record ResumoDaImportacao(
                 plano.mantidos(),
                 plano.reativados().size(),
                 plano.inativados().size(),
+                plano.novos().size() + plano.pinsDosExistentes().size(),
                 plano.problemas(),
                 plano.homonimos(),
                 plano.podeConfirmar());

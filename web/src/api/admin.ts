@@ -287,15 +287,16 @@ export function useAjustarColaborador() {
 
 export function useCadastrarColaborador() {
   return useAcao(
-    (dados: { nome: string; empresa: string; setor: string; pin?: string }) =>
+    (dados: { nome: string; empresa: string; setor: string; pin: string }) =>
       api.post<ColaboradorParaAdmin>("/admin/colaboradores", dados),
     [["admin", "colaboradores"], ["empresas"], ["setores"], ["colaboradores"]],
   );
 }
 
-export function useRedefinirPin() {
+export function useDefinirPin() {
   return useAcao(
-    (id: number) => api.post(`/admin/colaboradores/${id}/redefinir-pin`),
+    ({ id, pin }: { id: number; pin: string }) =>
+      api.post(`/admin/colaboradores/${id}/redefinir-pin`, { pin }),
     [["admin", "colaboradores"]],
   );
 }

@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -62,6 +63,11 @@ public abstract class TesteDeIntegracao {
     @Autowired
     protected JdbcTemplate jdbc;
 
+    @Autowired
+    private PasswordEncoder codificador;
+
+    private static String hashDoPinDeTeste;
+
     static boolean dockerDisponivel() {
         try {
             return DockerClientFactory.instance().isDockerAvailable();
@@ -99,7 +105,7 @@ public abstract class TesteDeIntegracao {
                     SELECT MIN(id) FROM colaborador
                     WHERE nome IN (N'Ana Exemplo', N'Bruno Teste', N'Carla Demonstração')
                     GROUP BY nome);
-                UPDATE colaborador SET ativo = 1, pin_hash = NULL, tentativas_falhas_pin = 0, pin_bloqueado_ate = NULL;
+                UPDATE colaborador SET ativo = 1, tentativas_falhas_pin = 0, pin_bloqueado_ate = NULL;
                 DELETE FROM setor WHERE id NOT IN (SELECT setor_id FROM colaborador);
                 DELETE FROM empresa WHERE id NOT IN (SELECT empresa_id FROM colaborador);
                 DELETE FROM temporada WHERE nome <> N'Temporada de exemplo';
@@ -108,6 +114,14 @@ public abstract class TesteDeIntegracao {
                 UPDATE administrador SET tentativas_falhas = 0, bloqueado_ate = NULL, ativo = 1,
                     perfil = 'ADMINISTRADOR', precisa_trocar_senha = 0;
                 """);
+        jdbc.update("UPDATE colaborador SET pin_hash = ?", hashDoPinDeTeste());
+    }
+
+    private String hashDoPinDeTeste() {
+        if (hashDoPinDeTeste == null) {
+            hashDoPinDeTeste = codificador.encode(PIN_DE_TESTE);
+        }
+        return hashDoPinDeTeste;
     }
 
     protected long idDoColaborador(String nome) {

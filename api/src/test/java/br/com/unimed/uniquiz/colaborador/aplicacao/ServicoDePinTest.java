@@ -39,8 +39,8 @@ class ServicoDePinTest {
     }
 
     @Test
-    void primeiroAcessoCriaOPinEGuardaSoOHash() {
-        servico.verificarOuCriar(ID, "482");
+    void definirGuardaSoOHash() {
+        servico.definir(ID, "482");
 
         assertThat(ana.temPin()).isTrue();
         assertThat(ana.getPinHash()).doesNotContain("482");
@@ -48,70 +48,77 @@ class ServicoDePinTest {
     }
 
     @Test
-    void depoisDoPrimeiroAcessoSoOMesmoPinEntra() {
-        servico.verificarOuCriar(ID, "482");
+    void semPinCadastradoNaoEntraENaoCriaPin() {
+        assertThatThrownBy(() -> servico.verificar(ID, "482"))
+                .isInstanceOf(ErroDeNegocio.class)
+                .hasMessage("O seu PIN ainda não foi cadastrado. Procure o administrador do UniQuiz.");
+        assertThat(ana.temPin()).isFalse();
+    }
 
-        assertThatCode(() -> servico.verificarOuCriar(ID, "482")).doesNotThrowAnyException();
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "111"))
+    @Test
+    void soOPinDefinidoEntra() {
+        servico.definir(ID, "482");
+
+        assertThatCode(() -> servico.verificar(ID, "482")).doesNotThrowAnyException();
+        assertThatThrownBy(() -> servico.verificar(ID, "111"))
                 .isInstanceOf(ErroDeNegocio.class)
                 .hasMessage("PIN incorreto.");
     }
 
     @Test
     void cincoPinsErradosBloqueiamMesmoParaOPinCerto() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(5);
 
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "482"))
+        assertThatThrownBy(() -> servico.verificar(ID, "482"))
                 .isInstanceOf(ErroDeNegocio.class)
                 .hasMessageContaining("bloqueado");
     }
 
     @Test
     void quatroErrosAindaNaoBloqueiam() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(4);
 
-        assertThatCode(() -> servico.verificarOuCriar(ID, "482")).doesNotThrowAnyException();
+        assertThatCode(() -> servico.verificar(ID, "482")).doesNotThrowAnyException();
     }
 
     @Test
     void depoisDeQuinzeMinutosODesbloqueioEAutomatico() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(5);
 
         relogio.avancar(Duration.ofMinutes(15));
 
-        assertThatCode(() -> servico.verificarOuCriar(ID, "482")).doesNotThrowAnyException();
+        assertThatCode(() -> servico.verificar(ID, "482")).doesNotThrowAnyException();
     }
 
     @Test
     void acertoZeraAContagemDeErros() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(4);
-        servico.verificarOuCriar(ID, "482");
+        servico.verificar(ID, "482");
         errarVezes(4);
 
-        assertThatCode(() -> servico.verificarOuCriar(ID, "482")).doesNotThrowAnyException();
+        assertThatCode(() -> servico.verificar(ID, "482")).doesNotThrowAnyException();
     }
 
     @Test
-    void redefinirApagaOPinEDestravaAPessoa() {
-        servico.verificarOuCriar(ID, "482");
+    void definirOutroPinTrocaODesbloqueiaAPessoa() {
+        servico.definir(ID, "482");
         errarVezes(5);
 
-        servico.redefinir(ID);
+        servico.definir(ID, "777");
 
-        assertThat(ana.temPin()).isFalse();
-        assertThatCode(() -> servico.verificarOuCriar(ID, "777")).doesNotThrowAnyException();
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "482")).isInstanceOf(ErroDeNegocio.class);
+        assertThatCode(() -> servico.verificar(ID, "777")).doesNotThrowAnyException();
+        assertThatThrownBy(() -> servico.verificar(ID, "482")).isInstanceOf(ErroDeNegocio.class);
     }
 
     @Test
     void colaboradorInativoNaoEntra() {
         ana.desativar();
 
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "482"))
+        assertThatThrownBy(() -> servico.verificar(ID, "482"))
                 .isInstanceOf(ErroDeNegocio.class)
                 .hasMessageContaining("ativos");
         assertThat(ana.temPin()).isFalse();
@@ -122,38 +129,38 @@ class ServicoDePinTest {
         when(colaboradores.buscarTravadoPorId(99L)).thenReturn(Optional.empty());
         when(colaboradores.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> servico.verificarOuCriar(99L, "482")).isInstanceOf(ErroDeNegocio.class);
-        assertThatThrownBy(() -> servico.redefinir(99L)).isInstanceOf(RecursoNaoEncontrado.class);
+        assertThatThrownBy(() -> servico.verificar(99L, "482")).isInstanceOf(ErroDeNegocio.class);
+        assertThatThrownBy(() -> servico.definir(99L, "482")).isInstanceOf(RecursoNaoEncontrado.class);
     }
 
     @Test
     void avisaQuantasTentativasRestamAPartirDoTerceiroErro() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(2);
 
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+        assertThatThrownBy(() -> servico.verificar(ID, "000"))
                 .hasMessage("PIN incorreto. Restam 2 tentativas antes do bloqueio.");
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+        assertThatThrownBy(() -> servico.verificar(ID, "000"))
                 .hasMessage("PIN incorreto. Resta 1 tentativa antes do bloqueio.");
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000"))
+        assertThatThrownBy(() -> servico.verificar(ID, "000"))
                 .hasMessage("PIN incorreto. O acesso ficou bloqueado até as 12:15."
                         + " Se esqueceu o PIN, procure o administrador do UniQuiz.");
     }
 
     @Test
     void bloqueioDizAteQueHorasVale() {
-        servico.verificarOuCriar(ID, "482");
+        servico.definir(ID, "482");
         errarVezes(5);
         relogio.avancar(Duration.ofMinutes(5));
 
-        assertThatThrownBy(() -> servico.verificarOuCriar(ID, "482"))
+        assertThatThrownBy(() -> servico.verificar(ID, "482"))
                 .hasMessage("Acesso bloqueado por excesso de tentativas. Tente de novo às 12:15."
                         + " Se esqueceu o PIN, procure o administrador do UniQuiz.");
     }
 
     private void errarVezes(int vezes) {
         for (int tentativa = 0; tentativa < vezes; tentativa++) {
-            assertThatThrownBy(() -> servico.verificarOuCriar(ID, "000")).isInstanceOf(ErroDeNegocio.class);
+            assertThatThrownBy(() -> servico.verificar(ID, "000")).isInstanceOf(ErroDeNegocio.class);
         }
     }
 

@@ -60,11 +60,6 @@ public class Colaborador {
         liberarPin();
     }
 
-    public void removerPin() {
-        this.pinHash = null;
-        liberarPin();
-    }
-
     public boolean pinBloqueado(Instant agora) {
         return pinBloqueadoAte != null && agora.isBefore(pinBloqueadoAte);
     }

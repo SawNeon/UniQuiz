@@ -28,29 +28,22 @@ public class ServicoDePin {
         this.relogio = relogio;
     }
 
-    public enum ResultadoDoPin {
-        PIN_CRIADO,
-        PIN_CONFIRMADO
-    }
-
     @Transactional(noRollbackFor = ErroDeNegocio.class)
-    public ResultadoDoPin verificarOuCriar(Long colaboradorId, String pin) {
+    public void verificar(Long colaboradorId, String pin) {
         Colaborador colaborador = colaboradorAtivo(colaboradorId);
         if (!colaborador.temPin()) {
-            colaborador.definirPin(codificador.encode(pin));
-            return ResultadoDoPin.PIN_CRIADO;
+            throw new ErroDeNegocio("O seu PIN ainda não foi cadastrado. Procure o administrador do UniQuiz.");
         }
         exigirDesbloqueado(colaborador);
         confirmarPin(colaborador, pin);
-        return ResultadoDoPin.PIN_CONFIRMADO;
     }
 
     @Transactional
-    public void redefinir(Long colaboradorId) {
+    public void definir(Long colaboradorId, String pin) {
         colaboradores
                 .findById(colaboradorId)
                 .orElseThrow(() -> new RecursoNaoEncontrado("Colaborador não encontrado."))
-                .removerPin();
+                .definirPin(codificador.encode(pin));
     }
 
     private Colaborador colaboradorAtivo(Long colaboradorId) {

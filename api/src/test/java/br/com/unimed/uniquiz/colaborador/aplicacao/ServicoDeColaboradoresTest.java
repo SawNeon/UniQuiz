@@ -60,17 +60,8 @@ class ServicoDeColaboradoresTest {
     }
 
     @Test
-    void semPinOColaboradorCriaOPinNoPrimeiroAcesso() {
-        ColaboradorParaAdmin cadastrado =
-                servico.cadastrar("Eva Nova", "Unimed Exemplo", "Tecnologia da Informação", null);
-
-        assertThat(cadastrado.temPin()).isFalse();
-        assertThat(colaboradorSalvo().temPin()).isFalse();
-    }
-
-    @Test
     void usaEmpresaESetorQueJaExistemIgnorandoMaiusculasEAcentos() {
-        servico.cadastrar("Eva Nova", "UNIMED exemplo", "tecnologia da informacao", null);
+        servico.cadastrar("Eva Nova", "UNIMED exemplo", "tecnologia da informacao", "246");
 
         verify(empresas, never()).save(any());
         verify(setores, never()).save(any());
@@ -78,7 +69,7 @@ class ServicoDeColaboradoresTest {
 
     @Test
     void criaEmpresaESetorQueNaoExistem() {
-        servico.cadastrar("Eva Nova", "Outra Empresa", "Novo Setor", null);
+        servico.cadastrar("Eva Nova", "Outra Empresa", "Novo Setor", "246");
 
         verify(empresas).save(any(Empresa.class));
         verify(setores).save(any(Setor.class));

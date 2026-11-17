@@ -240,11 +240,25 @@ function ConfirmacaoDeIdentidade({
 }) {
   const entrar = useEntrar();
   const [pin, setPin] = useState("");
-  const [repeticao, setRepeticao] = useState("");
   const [aparelhoCompartilhado, setAparelhoCompartilhado] = useState(false);
-  const primeiroAcesso = !pessoa.temPin;
-  const pinsDiferentes = primeiroAcesso && pinCompleto(repeticao) && repeticao !== pin;
-  const pronto = pinCompleto(pin) && (!primeiroAcesso || repeticao === pin);
+  const pronto = pinCompleto(pin);
+
+  if (!pessoa.temPin) {
+    return (
+      <section
+        aria-labelledby="titulo-confirmacao"
+        className="flex flex-col gap-4 rounded-padrao bg-aviso p-5"
+      >
+        <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
+          {pessoa.nome}, o seu PIN ainda não foi cadastrado
+        </h2>
+        <p>Procure o administrador do UniQuiz para receber o seu PIN de {TAMANHO_DO_PIN} números.</p>
+        <Botao variante="secundario" larguraTotal type="button" onClick={aoVoltar}>
+          Voltar
+        </Botao>
+      </section>
+    );
+  }
 
   return (
     <form
@@ -260,21 +274,9 @@ function ConfirmacaoDeIdentidade({
       <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
         Você é {pessoa.nome}, do setor {setor}?
       </h2>
-      <p>
-        {primeiroAcesso
-          ? "É o seu primeiro acesso. Crie um PIN de 3 números e guarde: você vai usar nas próximas vezes."
-          : "Digite o seu PIN de 3 números."}
-      </p>
-      <CampoDePin id="pin" rotulo={primeiroAcesso ? "Crie o seu PIN" : "PIN"} valor={pin} aoMudar={setPin} />
-      {primeiroAcesso && (
-        <CampoDePin id="repeticao" rotulo="Repita o PIN" valor={repeticao} aoMudar={setRepeticao} />
-      )}
-      {pinsDiferentes && (
-        <p role="alert" className="font-bold">
-          Os dois PINs precisam ser iguais.
-        </p>
-      )}
-      {!primeiroAcesso && <p className="text-sm">Esqueceu o PIN? Procure o administrador do UniQuiz.</p>}
+      <p>Digite o seu PIN de {TAMANHO_DO_PIN} números.</p>
+      <CampoDePin id="pin" rotulo="PIN" valor={pin} aoMudar={setPin} />
+      <p className="text-sm">Esqueceu o PIN? Procure o administrador do UniQuiz.</p>
       <label className="flex min-h-11 items-start gap-3">
         <input
           type="checkbox"

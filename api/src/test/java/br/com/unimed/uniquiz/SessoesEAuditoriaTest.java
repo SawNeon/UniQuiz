@@ -122,12 +122,15 @@ class SessoesEAuditoriaTest extends TesteDeIntegracao {
     }
 
     @Test
-    void entradaDoColaboradorRegistraPrimeiroAcessoEPinErrado() throws Exception {
+    void entradaDoColaboradorRegistraSucessoPinErradoEFaltaDePin() throws Exception {
         long antes = ultimoRegistro();
         long ana = idDoColaborador("Ana Exemplo");
 
         entrarComo("Ana Exemplo");
         mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", ana, "pin", "999")))
+                .andExpect(status().isUnprocessableEntity());
+        jdbc.update("UPDATE colaborador SET pin_hash = NULL WHERE id = ?", ana);
+        mvc.perform(comJson(post("/api/sessao"), Map.of("colaboradorId", ana, "pin", PIN_DE_TESTE)))
                 .andExpect(status().isUnprocessableEntity());
 
         assertThat(jdbc.queryForList(
@@ -136,7 +139,10 @@ class SessoesEAuditoriaTest extends TesteDeIntegracao {
                         antes,
                         ana))
                 .extracting(linha -> linha.get("resultado") + "|" + linha.get("detalhe"))
-                .containsExactly("SUCESSO|Primeiro acesso: PIN criado", "FALHA|PIN incorreto.");
+                .containsExactly(
+                        "SUCESSO|null",
+                        "FALHA|PIN incorreto.",
+                        "FALHA|O seu PIN ainda não foi cadastrado. Procure o administrador do UniQuiz.");
     }
 
     @Test

@@ -22,19 +22,23 @@ class LeitorDePlanilhaTest {
     void lerCsvComVirgula() {
         List<LinhaDaPlanilha> linhas = leitor.ler(
                 "rh.csv",
-                "nome,setor,empresa\nMaria de Souza,Faturamento,Unimed Varginha\n".getBytes(StandardCharsets.UTF_8));
+                "nome,setor,empresa,pin\nMaria de Souza,Faturamento,Unimed Varginha,482\n"
+                        .getBytes(StandardCharsets.UTF_8));
 
-        assertThat(linhas).containsExactly(new LinhaDaPlanilha(2, "Maria de Souza", "Faturamento", "Unimed Varginha"));
+        assertThat(linhas)
+                .containsExactly(new LinhaDaPlanilha(2, "Maria de Souza", "Faturamento", "Unimed Varginha", "482"));
     }
 
     @Test
     void lerCsvDoExcelComPontoEVirgulaBomEColunasForaDeOrdem() {
-        String conteudo = "﻿Empresa;Nome;Setor\r\nUnimed Varginha;João Pereira;Tecnologia da Informação\r\n";
+        String conteudo =
+                "﻿PIN;Empresa;Nome;Setor\r\n 0 5 1 ;Unimed Varginha;João Pereira;Tecnologia da Informação\r\n";
 
         List<LinhaDaPlanilha> linhas = leitor.ler("RH.CSV", conteudo.getBytes(StandardCharsets.UTF_8));
 
         assertThat(linhas)
-                .containsExactly(new LinhaDaPlanilha(2, "João Pereira", "Tecnologia da Informação", "Unimed Varginha"));
+                .containsExactly(
+                        new LinhaDaPlanilha(2, "João Pereira", "Tecnologia da Informação", "Unimed Varginha", "051"));
     }
 
     @Test
@@ -43,8 +47,10 @@ class LeitorDePlanilhaTest {
         try (XSSFWorkbook pasta = new XSSFWorkbook();
                 ByteArrayOutputStream saida = new ByteArrayOutputStream()) {
             Sheet aba = pasta.createSheet("RH");
-            preencher(aba.createRow(0), "nome", "setor", "empresa");
-            preencher(aba.createRow(1), "Ana Lima", "Laboratório", "Unimed Varginha");
+            preencher(aba.createRow(0), "nome", "setor", "empresa", "pin");
+            Row ana = aba.createRow(1);
+            preencher(ana, "Ana Lima", "Laboratório", "Unimed Varginha");
+            ana.createCell(3).setCellValue(7);
             aba.createRow(3).createCell(0).setCellValue("Rui Sem Setor");
             pasta.write(saida);
             planilha = saida.toByteArray();
@@ -54,19 +60,23 @@ class LeitorDePlanilhaTest {
 
         assertThat(linhas)
                 .containsExactly(
-                        new LinhaDaPlanilha(2, "Ana Lima", "Laboratório", "Unimed Varginha"),
-                        new LinhaDaPlanilha(4, "Rui Sem Setor", "", ""));
+                        new LinhaDaPlanilha(2, "Ana Lima", "Laboratório", "Unimed Varginha", "007"),
+                        new LinhaDaPlanilha(4, "Rui Sem Setor", "", "", ""));
     }
 
     @Test
     void recusaExtensaoDesconhecidaCabecalhoErradoEArquivoVazio() {
-        byte[] qualquer = "nome,setor,empresa\n".getBytes(StandardCharsets.UTF_8);
+        byte[] qualquer = "nome,setor,empresa,pin\n".getBytes(StandardCharsets.UTF_8);
 
         assertThatThrownBy(() -> leitor.ler("rh.txt", qualquer)).isInstanceOf(ErroDeNegocio.class);
         assertThatThrownBy(() -> leitor.ler(null, qualquer)).isInstanceOf(ErroDeNegocio.class);
         assertThatThrownBy(() -> leitor.ler("rh.csv", "nome,cargo\nAna,Analista\n".getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(ErroDeNegocio.class)
                 .hasMessageContaining("colunas");
+        assertThatThrownBy(() ->
+                        leitor.ler("rh.csv", "nome,setor,empresa\nAna,TI,Unimed\n".getBytes(StandardCharsets.UTF_8)))
+                .isInstanceOf(ErroDeNegocio.class)
+                .hasMessage("A primeira linha precisa ter as colunas nome, setor, empresa e pin.");
         assertThatThrownBy(() -> leitor.ler("rh.csv", new byte[0])).isInstanceOf(ErroDeNegocio.class);
         assertThatThrownBy(() -> leitor.ler("rh.xlsx", "não é planilha".getBytes(StandardCharsets.UTF_8)))
                 .isInstanceOf(ErroDeNegocio.class)

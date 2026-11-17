@@ -50,16 +50,16 @@ class ColaboradorTest {
     }
 
     @Test
-    void removerPinDestravaEApagaOHash() {
+    void definirOutroPinDestravaETrocaOHash() {
         Colaborador colaborador = colaborador();
         colaborador.definirPin("hash");
         for (int falha = 0; falha < Colaborador.TENTATIVAS_DE_PIN_ANTES_DO_BLOQUEIO; falha++) {
             colaborador.registrarFalhaDePin(AGORA);
         }
 
-        colaborador.removerPin();
+        colaborador.definirPin("outro hash");
 
-        assertThat(colaborador.temPin()).isFalse();
+        assertThat(colaborador.getPinHash()).isEqualTo("outro hash");
         assertThat(colaborador.pinBloqueado(AGORA)).isFalse();
     }
 }

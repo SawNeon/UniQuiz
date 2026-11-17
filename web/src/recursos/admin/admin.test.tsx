@@ -479,6 +479,7 @@ describe("TelaDeColaboradores", () => {
       mantidos: 2,
       reativados: 0,
       inativados: 1,
+      pinsDefinidos: 3,
       problemas: [],
       homonimos: [],
       podeConfirmar: true,
@@ -500,6 +501,7 @@ describe("TelaDeColaboradores", () => {
     expect(await screen.findByText("Prévia da importação")).toBeInTheDocument();
     expect(screen.getByText("Novos: 1")).toBeInTheDocument();
     expect(screen.getByText("Inativados: 1")).toBeInTheDocument();
+    expect(screen.getByText("PINs definidos: 3")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Confirmar importação" }));
     expect(await screen.findByText("Importação concluída.")).toBeInTheDocument();
@@ -515,6 +517,7 @@ describe("TelaDeColaboradores", () => {
           mantidos: 0,
           reativados: 0,
           inativados: 0,
+          pinsDefinidos: 2,
           problemas: ["Linha 4: preencha nome, setor e empresa."],
           homonimos: ['Linhas 2 e 3: "João" aparece duas vezes em TI.'],
           podeConfirmar: false,
@@ -553,13 +556,19 @@ describe("TelaDeColaboradores", () => {
     await userEvent.click(screen.getByRole("button", { name: "Zerar pontos" }));
 
     expect(await screen.findByText("Pontos zerados.")).toBeInTheDocument();
-    expect(screen.getByText("PIN criado")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Redefinir PIN" }));
-    expect(await screen.findByText("PIN apagado.")).toBeInTheDocument();
+    expect(screen.getByText("Com PIN")).toBeInTheDocument();
+    const definir = screen.getByRole("button", { name: "Definir PIN" });
+    expect(definir).toBeDisabled();
+    const novoPin = screen.getByLabelText("Novo PIN de Bruno Teste");
+    await userEvent.type(novoPin, "0x7a2");
+    expect(novoPin).toHaveValue("072");
+    await userEvent.click(definir);
+    expect(await screen.findByText("PIN definido.")).toBeInTheDocument();
+    expect(novoPin).toHaveValue("");
     expect(chamadas).toContainEqual({
       metodo: "POST",
       caminho: "/admin/colaboradores/4/redefinir-pin",
-      corpo: undefined,
+      corpo: { pin: "072" },
     });
     expect(chamadas).toContainEqual({
       metodo: "PATCH",
@@ -635,16 +644,18 @@ describe("TelaDeTemporadas", () => {
     await userEvent.type(screen.getByLabelText("Nome do colaborador"), "Diego Novo");
     await userEvent.type(screen.getByLabelText("Empresa do colaborador"), "unimed exemplo");
     await userEvent.type(screen.getByLabelText("Setor do colaborador"), "Financeiro");
+    await userEvent.type(screen.getByLabelText("PIN do colaborador"), "246");
     await userEvent.click(cadastrar);
 
     expect(await screen.findByText("Diego Novo cadastrado em Financeiro.")).toBeInTheDocument();
     expect(chamadas).toContainEqual({
       metodo: "POST",
       caminho: "/admin/colaboradores",
-      corpo: { nome: "Diego Novo", empresa: "unimed exemplo", setor: "Financeiro" },
+      corpo: { nome: "Diego Novo", empresa: "unimed exemplo", setor: "Financeiro", pin: "246" },
     });
 
     await userEvent.type(screen.getByLabelText("Nome do colaborador"), "Diego Novo");
+    await userEvent.type(screen.getByLabelText("PIN do colaborador"), "246");
     await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Já existe uma pessoa com esse nome");
   });
@@ -675,7 +686,7 @@ describe("TelaDeTemporadas", () => {
       renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
 
       await preencherDadosDaPessoa();
-      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "482");
+      await userEvent.type(screen.getByLabelText("PIN do colaborador"), "482");
       await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
 
       expect(await screen.findByText("Diego Novo cadastrado em TI.")).toBeInTheDocument();
@@ -684,16 +695,16 @@ describe("TelaDeTemporadas", () => {
         caminho: "/admin/colaboradores",
         corpo: { nome: "Diego Novo", empresa: "Unimed Exemplo", setor: "TI", pin: "482" },
       });
-      expect(screen.getByLabelText("PIN do colaborador (opcional)")).toHaveValue("");
+      expect(screen.getByLabelText("PIN do colaborador")).toHaveValue("");
     });
 
     it("aceita só números e no máximo 3", async () => {
       simularCadastro();
       renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
 
-      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "a1b2c3d4");
+      await userEvent.type(screen.getByLabelText("PIN do colaborador"), "a1b2c3d4");
 
-      expect(screen.getByLabelText("PIN do colaborador (opcional)")).toHaveValue("123");
+      expect(screen.getByLabelText("PIN do colaborador")).toHaveValue("123");
     });
 
     it("não deixa cadastrar com o PIN incompleto e explica o motivo", async () => {
@@ -701,23 +712,21 @@ describe("TelaDeTemporadas", () => {
       renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
 
       await preencherDadosDaPessoa();
-      await userEvent.type(screen.getByLabelText("PIN do colaborador (opcional)"), "48");
+      await userEvent.type(screen.getByLabelText("PIN do colaborador"), "48");
 
       expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
       expect(screen.getByRole("alert")).toHaveTextContent("O PIN tem 3 números.");
       expect(chamadas.filter((chamada) => chamada.metodo === "POST")).toHaveLength(0);
     });
 
-    it("sem PIN o cadastro segue como antes e não manda o campo", async () => {
+    it("sem PIN não deixa cadastrar", async () => {
       const chamadas = simularCadastro();
       renderizar(<TelaDeColaboradores />, { rota: "/admin/colaboradores", caminho: "/admin/colaboradores" });
 
       await preencherDadosDaPessoa();
-      await userEvent.click(screen.getByRole("button", { name: "Cadastrar" }));
 
-      await screen.findByText("Diego Novo cadastrado em TI.");
-      const envio = chamadas.find((chamada) => chamada.metodo === "POST");
-      expect(envio?.corpo).toEqual({ nome: "Diego Novo", empresa: "Unimed Exemplo", setor: "TI" });
+      expect(screen.getByRole("button", { name: "Cadastrar" })).toBeDisabled();
+      expect(chamadas.filter((chamada) => chamada.metodo === "POST")).toHaveLength(0);
     });
   });
 });

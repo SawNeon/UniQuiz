@@ -171,9 +171,7 @@ public class ServicoDeColaboradores {
 
     private Colaborador novoColaborador(Empresa empresa, Setor setor, String nome, String pin) {
         Colaborador colaborador = new Colaborador(empresa.getId(), setor.getId(), nome, relogio.instant());
-        if (pin != null) {
-            colaborador.definirPin(codificador.encode(pin));
-        }
+        colaborador.definirPin(codificador.encode(pin));
         return colaborador;
     }
 
