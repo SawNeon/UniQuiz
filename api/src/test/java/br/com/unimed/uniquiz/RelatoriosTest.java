@@ -125,6 +125,9 @@ class RelatoriosTest extends TesteDeIntegracao {
             assertThat(desafio.get("erroMaisComum").asText()).isNotBlank();
         }
         assertThat(desafios.findValuesAsText("erroMaisComum")).contains("Apenas os dados das empresas", "Falso");
+        assertThat(desafios.findValuesAsText("enunciado"))
+                .doesNotContain("Verdadeiro ou falso?", "Complete a frase.")
+                .allSatisfy(texto -> assertThat(texto).isNotBlank().doesNotContain("{{"));
     }
 
     @Test

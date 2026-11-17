@@ -12,6 +12,7 @@ import br.com.unimed.uniquiz.relatorio.dominio.CalibracaoDaDificuldade.Avaliacao
 import br.com.unimed.uniquiz.relatorio.dominio.DescricaoDaResposta;
 import br.com.unimed.uniquiz.relatorio.dominio.Semanas;
 import br.com.unimed.uniquiz.relatorio.dominio.SituacaoNoModulo;
+import br.com.unimed.uniquiz.relatorio.dominio.TextoDoDesafio;
 import br.com.unimed.uniquiz.relatorio.persistencia.ConsultasDeRelatorios;
 import br.com.unimed.uniquiz.relatorio.persistencia.ConsultasDeRelatorios.Conclusao;
 import br.com.unimed.uniquiz.relatorio.persistencia.ConsultasDeRelatorios.ConclusaoNoTempo;
@@ -407,7 +408,7 @@ public class ServicoDeRelatorios {
                 desafio.id(),
                 licao == null ? null : licao.modulo(),
                 licao == null ? null : licao.licao(),
-                desafio.enunciado(),
+                texto(tipo, desafio),
                 tipo,
                 dificuldade,
                 linha.respostas(),
@@ -419,11 +420,19 @@ public class ServicoDeRelatorios {
                 erroMaisComum == null ? 0 : erroMaisComum.vezes());
     }
 
+    private String texto(TipoDesafio tipo, DesafioRespondido desafio) {
+        try {
+            return TextoDoDesafio.descrever(desafio.enunciado(), leitor.ler(tipo, desafio.conteudoJson()));
+        } catch (IllegalStateException erro) {
+            return desafio.enunciado();
+        }
+    }
+
     private String descrever(TipoDesafio tipo, String conteudoJson, String respostaJson) {
         try {
             return DescricaoDaResposta.descrever(
                     leitor.ler(tipo, conteudoJson), leitor.lerResposta(tipo, json.readTree(respostaJson)));
-        } catch (JsonProcessingException | ErroDeNegocio erro) {
+        } catch (JsonProcessingException | ErroDeNegocio | IllegalStateException erro) {
             return "Resposta em formato antigo";
         }
     }

@@ -142,6 +142,27 @@ class RelatorioDominioTest {
     }
 
     @Nested
+    class Texto {
+
+        @Test
+        void mostraOQueFoiPerguntadoEmVezDoEnunciadoGenerico() {
+            var verdadeiroOuFalso = new ConteudoVerdadeiroOuFalso(" O CPF é um dado pessoal. ", true, "x");
+            var completar = new ConteudoCompletarClicando("A {{1}} protege {{2}}.", List.of());
+            var multipla = new ConteudoMultiplaEscolha(List.of());
+
+            assertThat(TextoDoDesafio.descrever("Verdadeiro ou falso?", verdadeiroOuFalso))
+                    .isEqualTo("O CPF é um dado pessoal.");
+            assertThat(TextoDoDesafio.descrever("Complete a frase.", completar)).isEqualTo("A ___ protege ___.");
+            assertThat(TextoDoDesafio.descrever("O que a LGPD protege?", multipla))
+                    .isEqualTo("O que a LGPD protege?");
+            assertThat(TextoDoDesafio.descrever("Verdadeiro ou falso?", new ConteudoVerdadeiroOuFalso(" ", true, "x")))
+                    .isEqualTo("Verdadeiro ou falso?");
+            assertThat(TextoDoDesafio.descrever("Complete a frase.", new ConteudoCompletarClicando(null, List.of())))
+                    .isEqualTo("Complete a frase.");
+        }
+    }
+
+    @Nested
     class Relatorios {
 
         @Test
