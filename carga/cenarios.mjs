@@ -172,3 +172,40 @@ export async function cenarioLimiteComEnderecoFalso({ cliente, metricas, requisi
     }),
   );
 }
+
+export async function cenarioCertificado({ cliente, dados, metricas, usuarios, rampaMs }) {
+  const liberacao = await dados.sessaoAdmin.requisitar({
+    metodo: "POST",
+    caminho: `/api/admin/certificados/modulos/${dados.moduloId}/liberacao`,
+    corpo: { liberado: true },
+  });
+  metricas.registrar("liberar o certificado (admin)", liberacao);
+  const escolhidos = dados.colaboradores.slice(0, usuarios);
+  await Promise.all(
+    escolhidos.map(async (colaborador, indice) => {
+      await pausar((indice / escolhidos.length) * rampaMs);
+      const sessao = criarSessaoVirtual(cliente);
+      const login = await medir(metricas, "entrar (PIN)", sessao, entrarComo(colaborador));
+      if (login.status !== 204) {
+        return;
+      }
+      const meus = await medir(metricas, "meus certificados", sessao, { caminho: "/api/certificados" });
+      const certificado = meus.corpo?.find?.((item) => item.moduloId === dados.moduloId);
+      conferir(metricas, certificado?.liberado === true, "pessoa que concluiu tem o certificado liberado");
+      if (certificado) {
+        await medir(metricas, "baixar o PDF do certificado", sessao, {
+          caminho: `/api/certificados/${certificado.codigo}/pdf`,
+        });
+      }
+    }),
+  );
+}
+
+export async function cenarioExportacaoDeCertificados({ dados, metricas }) {
+  const resultado = await dados.sessaoAdmin.requisitar({
+    caminho: `/api/admin/certificados/exportar?moduloId=${dados.moduloId}`,
+  });
+  metricas.registrar("exportar o ZIP de certificados (admin)", resultado);
+  const lista = await dados.sessaoAdmin.requisitar({ caminho: `/api/admin/certificados?moduloId=${dados.moduloId}` });
+  metricas.registrar(`listar certificados no painel (${lista.corpo?.total ?? "?"} no total)`, lista);
+}

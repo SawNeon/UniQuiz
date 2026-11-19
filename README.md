@@ -37,7 +37,7 @@ Você precisa de JDK 21, Node 22 ou mais novo e Docker. O Maven vem pelo wrapper
 
 O colaborador não cria o próprio PIN: ele vem na planilha do RH ou é informado pelo administrador. No painel, em Colaboradores, dá para importar a planilha, cadastrar uma pessoa avulsa (nome, empresa, setor e PIN de 3 números) e definir um PIN novo para quem esqueceu. Quem não tem PIN vê na entrada que precisa procurar o administrador. Tudo fica no SQL Server; o PIN é guardado só como hash, e 5 erros seguidos bloqueiam a pessoa por 15 minutos.
 
-O painel tem três perfis: **Administrador** (faz tudo), **Gestor** (vê e exporta os relatórios só dos setores atribuídos) e **Auditor** (vê e exporta todos os relatórios e o registro de auditoria). Em **Relatórios** ficam a conformidade (quem concluiu cada módulo, por setor e por pessoa), o desempenho (acerto na primeira resposta, abandono, erro mais comum e calibração da dificuldade) e o engajamento semanal, com exportação em CSV ou Excel.
+O painel tem três perfis: **Administrador** (faz tudo), **Gestor** (vê e exporta os relatórios só dos setores atribuídos) e **Auditor** (vê e exporta todos os relatórios e o registro de auditoria). Em **Certificados** o painel lista os certificados emitidos (com filtro por módulo, setor e nome) e baixa todos de uma vez em um ZIP, com um PDF por pessoa separado por módulo e uma lista em CSV; o Gestor só vê e exporta os dos próprios setores. O Administrador também libera ou trava o certificado de cada módulo e monta o modelo: envia a arte de fundo feita pela comunicação (PNG, JPG ou PDF em A4 deitado, até 10 MB) e arrasta o nome, o módulo, a data, o código e o endereço de validação para o lugar certo, escolhendo tamanho, cor da marca, alinhamento e um texto antes do campo (por exemplo "Varginha, "). Sem arte, o certificado usa o fundo padrão do UniQuiz. Em **Relatórios** ficam a conformidade (quem concluiu cada módulo, por setor e por pessoa), o desempenho (acerto na primeira resposta, abandono, erro mais comum e calibração da dificuldade) e o engajamento semanal, com exportação em CSV ou Excel.
 
 A documentação da API fica em `http://localhost:8080/api/docs/ui` no perfil `dev`.
 
@@ -79,6 +79,8 @@ UNIQUIZ_ADMIN_SENHA=... node carga/executar.mjs --base=https://servidor --insegu
 | `continuo` | N pessoas repetem lições durante `--duracao` segundos |
 | `limite` e `limite-falso` | Passam do limite de requisições, sem e com um `X-Forwarded-For` forjado |
 | `forca-bruta` | Chuta PINs em paralelo contra uma pessoa para conferir que o bloqueio vale de verdade |
+| `certificado` | Libera o certificado do módulo "Carga" e N pessoas entram e baixam o PDF; rode depois de `licao` |
+| `zip` | O admin exporta o ZIP com todos os certificados do módulo "Carga" |
 
 Todo o tráfego sai de um único IP, e a API limita cada IP a 300 requisições por minuto. Para medir a capacidade, suba esse limite só durante o teste (`UNIQUIZ_LIMITE_REQUISICOES_GERAL_POR_MINUTO`) e volte ao padrão depois. Os dados "Carga" precisam ser apagados do banco ao terminar. Não rode contra a produção.
 
@@ -103,7 +105,7 @@ Pontuação, limites de requisições e duração da sessão ficam em `api/src/m
 - **Segunda chance**: os desafios errados voltam no fim da lição, sem pontos.
 - **Sequência de dias**: conta dias úteis. Sábado e domingo não quebram a sequência.
 - **Classificação**: top 10 da temporada e a posição de quem está logado, com quantos pontos faltam para subir.
-- **Certificado**: ao concluir todas as lições de um módulo, a pessoa gera o PDF. O código de validação pode ser conferido em `/certificado/{codigo}`. O certificado guarda o nome e o título da época em que foi emitido.
+- **Certificado**: ao concluir todas as lições de um módulo, o certificado é emitido na hora, com a data da conclusão. Módulo novo começa com o certificado travado: a pessoa vê que ele está garantido, mas só baixa o PDF (e o código só é validado em `/certificado/{codigo}`) depois que o administrador libera o módulo. O certificado guarda o nome e o título da época em que foi emitido; o PDF é gerado na hora com o modelo atual, então trocar a arte ou as posições vale também para os já emitidos.
 
 ## Importar a planilha do RH
 

@@ -1,6 +1,8 @@
 import { criarCliente } from "./cliente.mjs";
 import {
+  cenarioCertificado,
   cenarioContinuo,
+  cenarioExportacaoDeCertificados,
   cenarioForcaBrutaDePin,
   cenarioLeitura,
   cenarioLicaoCompleta,
@@ -103,6 +105,8 @@ async function executar() {
     login: (metricas) => cenarioLoginEmRajada({ ...contexto, metricas }),
     licao: (metricas) => cenarioLicaoCompleta({ ...contexto, metricas }),
     continuo: (metricas) => cenarioContinuo({ ...contexto, metricas }),
+    certificado: (metricas) => cenarioCertificado({ ...contexto, metricas }),
+    zip: (metricas) => cenarioExportacaoDeCertificados({ ...contexto, metricas }),
     "forca-bruta": (metricas) =>
       cenarioForcaBrutaDePin({
         cliente,

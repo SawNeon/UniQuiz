@@ -20,16 +20,16 @@ export async function prepararDados({ cliente, administrador, usuarios, banco, s
   await preparo.publicar("modulos", moduloId);
 
   const colaboradores = await preparo.cadastrarColaboradores(usuarios);
-  return { moduloId, licaoId, colaboradores, limitesAtingidosNoPreparo: preparo.limitesAtingidos() };
+  return { moduloId, licaoId, colaboradores, sessaoAdmin, limitesAtingidosNoPreparo: preparo.limitesAtingidos() };
 }
 
 export async function reutilizarDados({ cliente, administrador }) {
   const sessaoAdmin = criarSessaoVirtual(cliente);
   const preparo = criarPreparo(sessaoAdmin);
   await preparo.entrarComoAdmin(administrador);
-  const licaoId = await preparo.licaoDeCarga();
+  const { moduloId, licaoId } = await preparo.licaoDeCarga();
   const colaboradores = await preparo.listarColaboradoresDeCarga();
-  return { licaoId, colaboradores, limitesAtingidosNoPreparo: preparo.limitesAtingidos() };
+  return { moduloId, licaoId, colaboradores, sessaoAdmin, limitesAtingidosNoPreparo: preparo.limitesAtingidos() };
 }
 
 function criarPreparo(sessao) {
@@ -75,7 +75,8 @@ function criarPreparo(sessao) {
   async function licaoDeCarga() {
     const resultado = await sessao.requisitar({ caminho: "/api/admin/modulos" });
     const licoes = resultado.corpo.flatMap((modulo) => modulo.licoes);
-    return licoes.find((licao) => licao.titulo === `${PREFIXO_DOS_DADOS} Lição`).id;
+    const licao = licoes.find((encontrada) => encontrada.titulo === `${PREFIXO_DOS_DADOS} Lição`);
+    return { moduloId: licao.moduloId, licaoId: licao.id };
   }
 
   async function criarModulo(titulo) {
