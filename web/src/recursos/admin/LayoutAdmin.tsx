@@ -3,6 +3,7 @@ import { useAdminEu, useSairAdmin } from "../../api/admin";
 import { naoAutenticado } from "../../api/cliente";
 import type { ContaLogada } from "../../api/tipos";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
+import { LogoUnimed } from "../../componentes/ui/LogoUnimed";
 import { FormularioDeTrocaDeSenha } from "./FormularioDeTrocaDeSenha";
 import { ContextoDaConta, PERFIS_DO_PAINEL, secoesPermitidas } from "./painel";
 
@@ -36,7 +37,8 @@ export function LayoutAdmin() {
     <ContextoDaConta value={conta}>
       <div className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-6 px-4 py-4">
         <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-1">
+            <LogoUnimed altura={28} className="self-start" />
             <span className="text-2xl font-extrabold">UniQuiz · Admin</span>
             <span className="text-sm">
               {conta.nome} · {PERFIS_DO_PAINEL[conta.perfil].rotulo}

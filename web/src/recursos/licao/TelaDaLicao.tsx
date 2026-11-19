@@ -121,7 +121,7 @@ export function TelaDaLicao() {
         </button>
       </div>
 
-      {iniciar.isPending && <Carregando texto="Preparando os desafios…" />}
+      {iniciar.isPending && <Carregando texto="Preparando os desafios…" comMascote />}
       {iniciar.isError && <MensagemDeErro erro={iniciar.error} aoTentarDeNovo={() => iniciar.mutate()} />}
       {concluir.isPending && <Carregando texto="Somando seus pontos…" />}
       {concluir.isError && <MensagemDeErro erro={concluir.error} aoTentarDeNovo={() => concluir.mutate()} />}

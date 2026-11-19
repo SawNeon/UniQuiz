@@ -57,7 +57,7 @@ describe("TelaDeEntrada", () => {
     expect(
       screen.getByRole("heading", { name: "Você é Bruno Teste, do setor Tecnologia da Informação?" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Digite o seu PIN de 3 números.")).toBeInTheDocument();
+    expect(screen.getByText("Digite o seu PIN: são os últimos 3 dígitos do seu CPF.")).toBeInTheDocument();
     expect(screen.getByText("Esqueceu o PIN? Procure o administrador do UniQuiz.")).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText("PIN"), "123");
     await userEvent.click(screen.getByRole("button", { name: "Sim, sou eu" }));

@@ -10,7 +10,7 @@ function recarregarPagina() {
 function Moldura({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-4 py-8 text-center">
-      <Mascote estado="triste" tamanho={112} />
+      <Mascote estado="ops" tamanho={128} />
       <h1 className="text-3xl font-extrabold">{titulo}</h1>
       {children}
     </main>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useLoginAdmin } from "../../api/admin";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
+import { LogoUnimed } from "../../componentes/ui/LogoUnimed";
 import { Campo, Entrada } from "./componentes";
 
 const esquema = z.object({
@@ -25,6 +26,7 @@ export function LoginAdmin() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 px-4">
+      <LogoUnimed altura={40} className="self-start" />
       <h1 className="text-3xl font-extrabold">UniQuiz · Administração</h1>
       <form
         className="flex flex-col gap-4"

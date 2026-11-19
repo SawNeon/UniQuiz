@@ -1,4 +1,5 @@
 import type { RespostaVerdadeiroOuFalso } from "../../api/tipos";
+import { tocar } from "../../sons/sons";
 import type { PropsDesafio } from "./contrato";
 
 const OPCOES = [
@@ -25,7 +26,10 @@ export function VerdadeiroOuFalso({
             role="radio"
             aria-checked={resposta?.valor === opcao.valor}
             disabled={desabilitado}
-            onClick={() => aoResponder({ valor: opcao.valor })}
+            onClick={() => {
+              tocar("selecionar");
+              aoResponder({ valor: opcao.valor });
+            }}
             className={[
               "min-h-14 rounded-padrao border-2 text-lg font-extrabold",
               resposta?.valor === opcao.valor

@@ -13,7 +13,7 @@ export function PainelDeCorrecao({ correcao }: { correcao: Correcao }) {
           <Icone nome={correcao.correta ? "certo" : "errado"} tamanho={30} strokeWidth={2.5} />
           <span className="text-[26px] font-extrabold">{correcao.correta ? "Muito bem!" : "Quase!"}</span>
         </div>
-        <Mascote estado={correcao.correta ? "feliz" : "triste"} tamanho={64} />
+        <Mascote estado={correcao.correta ? "sucesso" : "ops"} tamanho={64} />
       </div>
 
       {!correcao.correta && correcao.motivoDoErro && (

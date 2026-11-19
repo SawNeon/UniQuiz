@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router";
 import { usePerfil } from "../api/consultas";
 import { Icone, type NomeDoIcone } from "../componentes/ui/Icone";
-import { alternarSom, useSomLigado } from "../sons/sons";
+import { alternarSom, tocar, useSomLigado } from "../sons/sons";
 
 const itens: { para: string; rotulo: string; icone: NomeDoIcone }[] = [
   { para: "/", rotulo: "Caminho", icone: "caminho" },
@@ -12,6 +12,11 @@ const itens: { para: string; rotulo: string; icone: NomeDoIcone }[] = [
 export function LayoutDoColaborador() {
   const perfil = usePerfil();
   const somLigado = useSomLigado();
+
+  function aoAlternarSom() {
+    alternarSom();
+    tocar("clique");
+  }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
@@ -28,10 +33,10 @@ export function LayoutDoColaborador() {
         </span>
         <button
           type="button"
-          onClick={alternarSom}
+          onClick={aoAlternarSom}
           aria-label={somLigado ? "Desligar o som" : "Ligar o som"}
           aria-pressed={somLigado}
-          className="flex size-11 items-center justify-center rounded-padrao bg-neutro"
+          className="flex size-11 items-center justify-center rounded-padrao bg-neutro transition-transform active:scale-95 motion-reduce:transition-none"
         >
           <Icone nome={somLigado ? "somLigado" : "somDesligado"} />
         </button>
@@ -43,7 +48,7 @@ export function LayoutDoColaborador() {
 
       <nav
         aria-label="Menu principal"
-        className="fixed inset-x-0 bottom-0 border-t-2 border-neutro bg-white pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 border-t border-neutro bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
       >
         <ul className="mx-auto grid max-w-xl grid-cols-3">
           {itens.map((item) => (
@@ -51,15 +56,29 @@ export function LayoutDoColaborador() {
               <NavLink
                 to={item.para}
                 end
+                onClick={() => tocar("navegar")}
                 className={({ isActive }) =>
                   [
-                    "flex min-h-16 flex-col items-center justify-center gap-1 border-t-4 text-sm",
-                    isActive ? "border-primaria font-extrabold" : "border-transparent font-semibold",
+                    "relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] transition-colors motion-reduce:transition-none",
+                    isActive
+                      ? "font-extrabold text-primaria"
+                      : "font-semibold text-texto/55 hover:text-texto",
                   ].join(" ")
                 }
               >
-                <Icone nome={item.icone} />
-                {item.rotulo}
+                {({ isActive }) => (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        "absolute top-0 h-0.5 w-8 rounded-full bg-primaria transition-opacity motion-reduce:transition-none",
+                        isActive ? "opacity-100" : "opacity-0",
+                      ].join(" ")}
+                    />
+                    <Icone nome={item.icone} strokeWidth={isActive ? 2.25 : 1.75} />
+                    {item.rotulo}
+                  </>
+                )}
               </NavLink>
             </li>
           ))}

@@ -1,5 +1,6 @@
 import { Fragment, useState } from "react";
 import type { RespostaCompletarClicando } from "../../api/tipos";
+import { tocar } from "../../sons/sons";
 import type { PropsDesafio } from "./contrato";
 import { dividirEmTrechos } from "./trechos";
 
@@ -20,6 +21,7 @@ export function CompletarClicando({
     if (ativa === null) {
       return;
     }
+    tocar("selecionar");
     aoResponder({ lacunas: { ...preenchidas, [String(ativa)]: palavra } });
     setSelecionada(null);
   }
@@ -28,6 +30,7 @@ export function CompletarClicando({
     const restantes = Object.fromEntries(
       Object.entries(preenchidas).filter(([chave]) => chave !== String(lacunaId)),
     );
+    tocar("clique");
     aoResponder({ lacunas: restantes });
     setSelecionada(lacunaId);
   }

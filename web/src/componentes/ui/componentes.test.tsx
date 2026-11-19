@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Mascote } from "../../mascote/Mascote";
+import { LogoUnimed } from "./LogoUnimed";
 import { Botao } from "./Botao";
 import { Carregando, MensagemDeErro } from "./Estados";
 import { Icone, IconeDoTrofeu } from "./Icone";
@@ -72,15 +73,36 @@ describe("componentes básicos", () => {
   it("o mascote tem nome acessível em cada estado", () => {
     render(
       <>
-        <Mascote estado="neutro" />
-        <Mascote estado="feliz" />
-        <Mascote estado="triste" />
-        <Mascote estado="comemorando" />
+        <Mascote estado="padrao" />
+        <Mascote estado="acenando" />
+        <Mascote estado="sucesso" />
+        <Mascote estado="pensando" />
+        <Mascote estado="ops" />
+        <Mascote estado="offline" />
       </>,
     );
 
-    for (const nome of ["Bit, o mascote da TI", "Bit feliz", "Bit triste", "Bit comemorando"]) {
+    for (const nome of [
+      "Tiuv, o enfermeiro do TI",
+      "Tiuv acenando",
+      "Tiuv comemorando",
+      "Tiuv pensando",
+      "Tiuv preocupado",
+      "Tiuv em manutenção",
+    ]) {
       expect(screen.getByRole("img", { name: nome })).toBeInTheDocument();
     }
+  });
+
+  it("o mascote nunca fica menor que 64 px e o logo mantém a proporção", () => {
+    render(
+      <>
+        <Mascote estado="padrao" tamanho={30} />
+        <LogoUnimed altura={40} />
+      </>,
+    );
+
+    expect(screen.getByRole("img", { name: "Tiuv, o enfermeiro do TI" })).toHaveAttribute("width", "64");
+    expect(screen.getByRole("img", { name: "Unimed Varginha" })).toHaveStyle({ height: "40px" });
   });
 });

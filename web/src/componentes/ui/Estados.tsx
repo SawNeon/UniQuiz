@@ -1,10 +1,20 @@
 import { mensagemDe } from "../../api/cliente";
+import { Mascote } from "../../mascote/Mascote";
 
-export function Carregando({ texto = "Carregando…" }: { texto?: string }) {
+export function Carregando({
+  texto = "Carregando…",
+  comMascote = false,
+}: {
+  texto?: string;
+  comMascote?: boolean;
+}) {
   return (
-    <p role="status" className="p-6 text-center font-bold">
-      {texto}
-    </p>
+    <div role="status" className="flex flex-col items-center gap-3 p-6 text-center font-bold">
+      {comMascote && (
+        <Mascote estado="pensando" tamanho={120} className="animate-pulse motion-reduce:animate-none" />
+      )}
+      <p>{texto}</p>
+    </div>
   );
 }
 

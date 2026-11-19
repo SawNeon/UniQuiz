@@ -11,7 +11,9 @@ import {
 import type { ColaboradorDaEntrada, ItemDaLista } from "../../api/tipos";
 import { Botao } from "../../componentes/ui/Botao";
 import { MensagemDeErro } from "../../componentes/ui/Estados";
+import { LogoUnimed } from "../../componentes/ui/LogoUnimed";
 import { Mascote } from "../../mascote/Mascote";
+import { tocar } from "../../sons/sons";
 import { pinCompleto, pinDigitado, TAMANHO_DO_PIN } from "./pin";
 
 const CHAVE_DA_EMPRESA_LEMBRADA = "uniquiz.empresa";
@@ -90,8 +92,9 @@ export function TelaDeEntrada() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 py-8">
+      <LogoUnimed altura={40} className="self-start" />
       <header className="flex items-center gap-4">
-        <Mascote estado="feliz" tamanho={88} />
+        <Mascote estado="acenando" tamanho={112} />
         <div>
           <h1 className="text-4xl font-extrabold">UniQuiz</h1>
           <p className="text-lg font-bold">Desafios da TI</p>
@@ -252,7 +255,10 @@ function ConfirmacaoDeIdentidade({
         <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
           {pessoa.nome}, o seu PIN ainda não foi cadastrado
         </h2>
-        <p>Procure o administrador do UniQuiz para receber o seu PIN de {TAMANHO_DO_PIN} números.</p>
+        <p>
+          Procure o administrador do UniQuiz para cadastrar o seu PIN: os últimos {TAMANHO_DO_PIN} dígitos do
+          seu CPF.
+        </p>
         <Botao variante="secundario" larguraTotal type="button" onClick={aoVoltar}>
           Voltar
         </Botao>
@@ -274,7 +280,7 @@ function ConfirmacaoDeIdentidade({
       <h2 id="titulo-confirmacao" className="text-2xl font-extrabold">
         Você é {pessoa.nome}, do setor {setor}?
       </h2>
-      <p>Digite o seu PIN de {TAMANHO_DO_PIN} números.</p>
+      <p>Digite o seu PIN: são os últimos {TAMANHO_DO_PIN} dígitos do seu CPF.</p>
       <CampoDePin id="pin" rotulo="PIN" valor={pin} aoMudar={setPin} />
       <p className="text-sm">Esqueceu o PIN? Procure o administrador do UniQuiz.</p>
       <label className="flex min-h-11 items-start gap-3">
@@ -323,7 +329,13 @@ function CampoDePin({
         autoComplete="off"
         maxLength={TAMANHO_DO_PIN}
         value={valor}
-        onChange={(evento) => aoMudar(pinDigitado(evento.target.value))}
+        onChange={(evento) => {
+          const digitado = pinDigitado(evento.target.value);
+          if (digitado.length > valor.length) {
+            tocar("pin");
+          }
+          aoMudar(digitado);
+        }}
         className="min-h-12 w-32 rounded-padrao border-2 border-neutro bg-white px-3 text-center text-2xl tracking-[0.5em]"
       />
     </div>

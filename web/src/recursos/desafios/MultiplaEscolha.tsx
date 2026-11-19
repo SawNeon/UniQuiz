@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
 import type { RespostaMultiplaEscolha } from "../../api/tipos";
+import { tocar } from "../../sons/sons";
 import type { PropsDesafio } from "./contrato";
 
 export function MultiplaEscolha({
@@ -47,7 +48,10 @@ export function MultiplaEscolha({
             aria-checked={escolhida}
             tabIndex={escolhida || (!resposta && alternativa === alternativas[0]) ? 0 : -1}
             disabled={desabilitado}
-            onClick={() => aoResponder({ alternativaId: alternativa.id })}
+            onClick={() => {
+              tocar("selecionar");
+              aoResponder({ alternativaId: alternativa.id });
+            }}
             className={[
               "min-h-14 rounded-padrao border-2 px-4 py-3 text-left text-lg font-bold transition-colors",
               escolhida ? "border-texto" : "border-neutro hover:bg-neutro",
