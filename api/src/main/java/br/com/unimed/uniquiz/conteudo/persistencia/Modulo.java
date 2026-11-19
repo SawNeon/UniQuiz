@@ -19,6 +19,7 @@ public class Modulo {
     private String descricao;
     private String materialEstudo;
     private int ordem;
+    private boolean certificadoLiberado;
 
     @Enumerated(EnumType.STRING)
     private StatusPublicacao status;
@@ -43,6 +44,10 @@ public class Modulo {
 
     public void mover(int novaOrdem) {
         this.ordem = novaOrdem;
+    }
+
+    public void liberarCertificado(boolean liberado) {
+        this.certificadoLiberado = liberado;
     }
 
     public boolean publicado() {
@@ -71,5 +76,9 @@ public class Modulo {
 
     public StatusPublicacao getStatus() {
         return status;
+    }
+
+    public boolean isCertificadoLiberado() {
+        return certificadoLiberado;
     }
 }

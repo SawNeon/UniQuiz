@@ -12,7 +12,13 @@ public final class ConteudoPublicado {
 
     private ConteudoPublicado() {}
 
-    public record Modulo(Long id, String titulo, String descricao, boolean temMaterial, List<Licao> licoes) {}
+    public record Modulo(
+            Long id,
+            String titulo,
+            String descricao,
+            boolean temMaterial,
+            boolean certificadoLiberado,
+            List<Licao> licoes) {}
 
     public record Licao(Long id, Long moduloId, String titulo, QuantidadesPorNivel quantidades) {}
 

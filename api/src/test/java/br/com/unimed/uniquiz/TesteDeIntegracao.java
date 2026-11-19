@@ -83,6 +83,7 @@ public abstract class TesteDeIntegracao {
                 DELETE FROM resposta;
                 DELETE FROM evento_pontos;
                 DELETE FROM certificado;
+                DELETE FROM modelo_de_certificado;
                 DELETE FROM desafio_da_tentativa;
                 DELETE FROM tentativa;
                 DELETE FROM colaborador_trofeu;
@@ -94,6 +95,7 @@ public abstract class TesteDeIntegracao {
                 DELETE FROM licao WHERE modulo_id IN (
                     SELECT id FROM modulo WHERE titulo NOT IN (N'LGPD na prática', N'IA com responsabilidade'));
                 DELETE FROM modulo WHERE titulo NOT IN (N'LGPD na prática', N'IA com responsabilidade');
+                UPDATE modulo SET certificado_liberado = 1;
                 UPDATE licao SET
                     qtd_facil = (SELECT COUNT(*) FROM desafio d WHERE d.licao_id = licao.id
                                  AND d.status = 'PUBLICADO' AND d.dificuldade = 'FACIL'),

@@ -27,6 +27,7 @@ public class ServicoDeProgresso {
             String descricao,
             boolean temMaterial,
             boolean concluido,
+            boolean certificadoLiberado,
             int licoesConcluidas,
             List<LicaoNoCaminho> licoes) {}
 
@@ -59,6 +60,7 @@ public class ServicoDeProgresso {
                             modulo.descricao(),
                             modulo.temMaterial(),
                             concluidas == licoes.size(),
+                            modulo.certificadoLiberado(),
                             concluidas,
                             licoes);
                 })

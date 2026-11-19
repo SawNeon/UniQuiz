@@ -13,6 +13,7 @@ export const SECOES_DO_PAINEL: SecaoDoPainel[] = [
   { para: "/admin/temporadas", rotulo: "Temporadas", permissao: "GERIR_TEMPORADAS" },
   { para: "/admin/usuarios", rotulo: "Usuários do painel", permissao: "GERIR_USUARIOS_DO_PAINEL" },
   { para: "/admin/relatorios", rotulo: "Relatórios", permissao: "VER_RELATORIOS" },
+  { para: "/admin/certificados", rotulo: "Certificados", permissao: "VER_RELATORIOS" },
   { para: "/admin/auditoria", rotulo: "Auditoria", permissao: "VER_AUDITORIA" },
   { para: "/admin/minha-conta", rotulo: "Minha conta" },
 ];

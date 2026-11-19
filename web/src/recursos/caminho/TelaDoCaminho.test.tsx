@@ -25,6 +25,7 @@ const caminho: ModuloNoCaminho[] = [
     descricao: "",
     temMaterial: true,
     concluido: true,
+    certificadoLiberado: true,
     licoesConcluidas: 1,
     licoes: [{ id: 1, titulo: "O básico da LGPD", situacao: "CONCLUIDA" }],
   },
@@ -34,6 +35,7 @@ const caminho: ModuloNoCaminho[] = [
     descricao: "",
     temMaterial: false,
     concluido: false,
+    certificadoLiberado: true,
     licoesConcluidas: 0,
     licoes: [
       { id: 2, titulo: "IA no trabalho", situacao: "DISPONIVEL" },
@@ -98,7 +100,13 @@ describe("TelaDoCaminho", () => {
         corpo: {
           ...perfil,
           certificados: [
-            { codigo: "JA0EMITIDO22", moduloId: 10, modulo: "LGPD na prática", emitidoEm: "2026-11-01" },
+            {
+              codigo: "JA0EMITIDO22",
+              moduloId: 10,
+              modulo: "LGPD na prática",
+              emitidoEm: "2026-11-01",
+              liberado: true,
+            },
           ],
         },
       },
@@ -109,6 +117,17 @@ describe("TelaDoCaminho", () => {
       "href",
       "/api/certificados/JA0EMITIDO22/pdf",
     );
+  });
+
+  it("avisa que o certificado está garantido enquanto o módulo não foi liberado", async () => {
+    simularApi({
+      "GET /caminho": { corpo: caminho.map((modulo) => ({ ...modulo, certificadoLiberado: false })) },
+      "GET /eu": { corpo: perfil },
+    });
+    renderizar(<TelaDoCaminho />);
+
+    expect(await screen.findByText("Certificado garantido, aguardando liberação")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Gerar certificado" })).not.toBeInTheDocument();
   });
 
   it("avisa quando ainda não há desafios publicados", async () => {

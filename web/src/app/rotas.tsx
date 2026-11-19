@@ -88,6 +88,9 @@ export const rotas = createBrowserRouter([
           telaProtegida("relatorios", "VER_RELATORIOS", () =>
             import("../recursos/admin/TelaDeRelatorios").then((modulo) => modulo.TelaDeRelatorios),
           ),
+          telaProtegida("certificados", "VER_RELATORIOS", () =>
+            import("../recursos/admin/TelaDeCertificados").then((modulo) => modulo.TelaDeCertificados),
+          ),
           telaProtegida("auditoria", "VER_AUDITORIA", () =>
             import("../recursos/admin/TelaDeAuditoria").then((modulo) => modulo.TelaDeAuditoria),
           ),

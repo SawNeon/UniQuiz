@@ -65,6 +65,7 @@ public final class ConteudoParaAdmin {
             String materialEstudo,
             int ordem,
             StatusPublicacao status,
+            boolean certificadoLiberado,
             List<Licao> licoes) {}
 
     public record Licao(

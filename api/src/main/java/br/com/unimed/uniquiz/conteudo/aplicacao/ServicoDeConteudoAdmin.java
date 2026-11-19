@@ -70,6 +70,11 @@ public class ServicoDeConteudoAdmin {
     }
 
     @Transactional
+    public void liberarCertificado(Long moduloId, boolean liberado) {
+        modulo(moduloId).liberarCertificado(liberado);
+    }
+
+    @Transactional
     public void reordenarModulos(List<Long> ids) {
         List<Modulo> todos = modulos.findAllByOrderByOrdemAsc();
         reordenar(todos, ids, Modulo::getId, Modulo::mover);
@@ -229,6 +234,7 @@ public class ServicoDeConteudoAdmin {
                 modulo.getMaterialEstudo(),
                 modulo.getOrdem(),
                 modulo.getStatus(),
+                modulo.isCertificadoLiberado(),
                 licoesDoModulo);
     }
 

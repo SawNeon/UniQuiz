@@ -25,6 +25,7 @@ export interface Certificado {
   moduloId: number;
   modulo: string;
   emitidoEm: string;
+  liberado: boolean;
 }
 
 export interface Perfil {
@@ -53,6 +54,7 @@ export interface ModuloNoCaminho {
   descricao: string;
   temMaterial: boolean;
   concluido: boolean;
+  certificadoLiberado: boolean;
   licoesConcluidas: number;
   licoes: LicaoNoCaminho[];
 }
@@ -134,7 +136,7 @@ export interface ResultadoDaLicao {
   pontosGanhos: number;
   diasSeguidos: number;
   trofeusNovos: Trofeu[];
-  moduloConcluido?: { id: number; titulo: string };
+  moduloConcluido?: { id: number; titulo: string; certificadoLiberado: boolean; codigoDoCertificado: string };
 }
 
 export interface Temporada {
@@ -191,6 +193,7 @@ export interface ModuloParaAdmin {
   materialEstudo?: string;
   ordem: number;
   status: StatusPublicacao;
+  certificadoLiberado: boolean;
   licoes: LicaoParaAdmin[];
 }
 
@@ -272,6 +275,7 @@ export type Permissao =
   | "GERIR_COLABORADORES"
   | "GERIR_TEMPORADAS"
   | "GERIR_USUARIOS_DO_PAINEL"
+  | "GERIR_CERTIFICADOS"
   | "VER_RELATORIOS"
   | "EXPORTAR_RELATORIOS"
   | "VER_AUDITORIA";
@@ -488,4 +492,62 @@ export interface Engajamento {
     novosParticipantes: number;
     participacao: number;
   }[];
+}
+
+export type CampoDoCertificado = "NOME" | "MODULO" | "DATA" | "CODIGO" | "ENDERECO_DE_VALIDACAO";
+
+export type AlinhamentoDoCampo = "ESQUERDA" | "CENTRO" | "DIREITA";
+
+export interface PosicaoDoCampo {
+  campo: CampoDoCertificado;
+  visivel: boolean;
+  x: number;
+  y: number;
+  tamanho: number;
+  cor: string;
+  alinhamento: AlinhamentoDoCampo;
+  negrito: boolean;
+  larguraMaxima: number;
+  prefixo: string;
+}
+
+export interface ModeloDoCertificado {
+  campos: PosicaoDoCampo[];
+  temArte: boolean;
+  nomeDaArte?: string;
+  atualizadoEm?: string;
+  avisos: string[];
+}
+
+export interface ModuloComCertificado {
+  id: number;
+  titulo: string;
+  status: StatusPublicacao;
+  liberado: boolean;
+  emitidos: number;
+}
+
+export interface CertificadoNoPainel {
+  codigo: string;
+  codigoFormatado: string;
+  moduloId: number;
+  modulo: string;
+  nome: string;
+  empresa: string;
+  setor: string;
+  emitidoEm: string;
+}
+
+export interface PaginaDeCertificados {
+  itens: CertificadoNoPainel[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+}
+
+export interface FiltroDeCertificados {
+  moduloId?: number;
+  setorId?: number;
+  busca?: string;
+  pagina: number;
 }

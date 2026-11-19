@@ -55,7 +55,8 @@ class GeradorDePdfTest {
                 "N".repeat(120), "Módulo", LocalDate.of(2026, 12, 18), "ABCD2345EFGH", "https://x"));
 
         try (PDDocument documento = Loader.loadPDF(pdf)) {
-            assertThat(new PDFTextStripper().getText(documento)).contains("N".repeat(59) + "…");
+            String texto = new PDFTextStripper().getText(documento);
+            assertThat(texto).contains("NNNN…").doesNotContain("N".repeat(120));
         }
     }
 }

@@ -67,16 +67,30 @@ export function TelaDePerfil() {
                 <Icone nome="certificado" tamanho={28} />
                 <div className="flex-1">
                   <p className="font-extrabold">{certificado.modulo}</p>
-                  <p className="text-sm">Emitido em {dataCurta(certificado.emitidoEm)}</p>
+                  <p className="text-sm">
+                    {certificado.liberado
+                      ? `Emitido em ${dataCurta(certificado.emitidoEm)}`
+                      : "Garantido, aguardando liberação para baixar"}
+                  </p>
                 </div>
-                <a
-                  href={enderecoDoPdf(certificado.codigo)}
-                  download
-                  aria-label={`Baixar o certificado de ${certificado.modulo}`}
-                  className="flex size-11 items-center justify-center rounded-padrao bg-white"
-                >
-                  <Icone nome="baixar" />
-                </a>
+                {certificado.liberado ? (
+                  <a
+                    href={enderecoDoPdf(certificado.codigo)}
+                    download
+                    aria-label={`Baixar o certificado de ${certificado.modulo}`}
+                    className="flex size-11 items-center justify-center rounded-padrao bg-white"
+                  >
+                    <Icone nome="baixar" />
+                  </a>
+                ) : (
+                  <span
+                    role="img"
+                    aria-label={`Certificado de ${certificado.modulo} aguardando liberação`}
+                    className="flex size-11 items-center justify-center rounded-padrao bg-white/60"
+                  >
+                    <Icone nome="cadeado" />
+                  </span>
+                )}
               </li>
             ))}
           </ul>

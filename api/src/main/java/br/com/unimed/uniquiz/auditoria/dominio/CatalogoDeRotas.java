@@ -30,6 +30,12 @@ public final class CatalogoDeRotas {
             entry("POST /api/admin/colaboradores/{colaboradorId}/redefinir-pin", AcaoAuditada.PIN_REDEFINIDO),
             entry("POST /api/admin/colaboradores/importacao/confirmar", AcaoAuditada.PLANILHA_IMPORTADA),
             entry("POST /api/admin/colaboradores/{colaboradorId}/zerar-pontos", AcaoAuditada.PONTOS_ZERADOS),
+            entry("PUT /api/admin/certificados/modelo", AcaoAuditada.MODELO_DE_CERTIFICADO_EDITADO),
+            entry("POST /api/admin/certificados/modelo/arte", AcaoAuditada.ARTE_DO_CERTIFICADO_ENVIADA),
+            entry("DELETE /api/admin/certificados/modelo/arte", AcaoAuditada.ARTE_DO_CERTIFICADO_REMOVIDA),
+            entry(
+                    "POST /api/admin/certificados/modulos/{moduloId}/liberacao",
+                    AcaoAuditada.LIBERACAO_DO_CERTIFICADO_ALTERADA),
             entry("POST /api/admin/temporadas", AcaoAuditada.TEMPORADA_CRIADA),
             entry("PUT /api/admin/temporadas/{temporadaId}", AcaoAuditada.TEMPORADA_EDITADA),
             entry("POST /api/admin/usuarios", AcaoAuditada.USUARIO_DO_PAINEL_CRIADO),
@@ -44,7 +50,10 @@ public final class CatalogoDeRotas {
             entry("POST /api/admin/minha-conta/sessoes/encerrar-outras", AcaoAuditada.OUTRAS_SESSOES_ENCERRADAS));
 
     private static final Set<String> REGISTRADAS_PELO_PROPRIO_SERVICO = Set.of(
-            "POST /api/admin/login", "DELETE /api/admin/sessao", "POST /api/admin/colaboradores/importacao/previa");
+            "POST /api/admin/login",
+            "DELETE /api/admin/sessao",
+            "POST /api/admin/colaboradores/importacao/previa",
+            "POST /api/admin/certificados/modelo/previa");
 
     private CatalogoDeRotas() {}
 

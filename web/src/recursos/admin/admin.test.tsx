@@ -18,6 +18,7 @@ const modulos: ModuloParaAdmin[] = [
     materialEstudo: "# LGPD",
     ordem: 1,
     status: "PUBLICADO",
+    certificadoLiberado: true,
     licoes: [
       {
         id: 5,
@@ -31,7 +32,15 @@ const modulos: ModuloParaAdmin[] = [
       },
     ],
   },
-  { id: 2, titulo: "IA com responsabilidade", descricao: "", ordem: 2, status: "RASCUNHO", licoes: [] },
+  {
+    id: 2,
+    titulo: "IA com responsabilidade",
+    descricao: "",
+    ordem: 2,
+    status: "RASCUNHO",
+    certificadoLiberado: false,
+    licoes: [],
+  },
 ];
 
 describe("LoginAdmin", () => {

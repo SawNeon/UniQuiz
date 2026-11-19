@@ -29,7 +29,22 @@ const perfil: Perfil = {
       icone: "chama",
     },
   ],
-  certificados: [{ codigo: "ABCD2345EFGH", moduloId: 1, modulo: "LGPD na prática", emitidoEm: "2026-12-18" }],
+  certificados: [
+    {
+      codigo: "ABCD2345EFGH",
+      moduloId: 1,
+      modulo: "LGPD na prática",
+      emitidoEm: "2026-12-18",
+      liberado: true,
+    },
+    {
+      codigo: "TRAV2345EFGH",
+      moduloId: 2,
+      modulo: "Golpes digitais",
+      emitidoEm: "2026-12-19",
+      liberado: false,
+    },
+  ],
 };
 
 describe("TelaDePerfil", () => {
@@ -49,6 +64,19 @@ describe("TelaDePerfil", () => {
       "/api/certificados/ABCD2345EFGH/pdf",
     );
     expect(screen.getByText("Emitido em 18/12/2026")).toBeInTheDocument();
+  });
+
+  it("mostra o certificado travado sem o link para baixar", async () => {
+    simularApi({ "GET /eu": { corpo: perfil } });
+    renderizar(<TelaDePerfil />);
+
+    expect(
+      await screen.findByRole("img", { name: "Certificado de Golpes digitais aguardando liberação" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Garantido, aguardando liberação para baixar")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Baixar o certificado de Golpes digitais" }),
+    ).not.toBeInTheDocument();
   });
 
   it("explica como ganhar o primeiro certificado", async () => {

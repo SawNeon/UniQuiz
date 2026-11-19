@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router";
-import { useEmitirCertificado, enderecoDoPdf } from "../../api/consultas";
+import { enderecoDoPdf } from "../../api/consultas";
 import type { MotivoDosPontos, ResultadoDaLicao as Resultado } from "../../api/tipos";
-import { Botao } from "../../componentes/ui/Botao";
-import { MensagemDeErro } from "../../componentes/ui/Estados";
+import { Confete } from "../../componentes/ui/Confete";
 import { Icone, IconeDoTrofeu } from "../../componentes/ui/Icone";
 import { Mascote } from "../../mascote/Mascote";
 
@@ -21,16 +20,15 @@ function formatarTempo(ms: number): string {
 }
 
 export function ResultadoDaLicao({ resultado }: { resultado: Resultado }) {
-  const emitir = useEmitirCertificado();
-
   return (
     <div className="flex flex-col items-center gap-6 py-6 text-center">
+      {(resultado.perfeita || resultado.trofeusNovos.length > 0) && <Confete />}
       <motion.div
         initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
-        <Mascote estado={resultado.perfeita ? "comemorando" : "feliz"} tamanho={140} />
+        <Mascote estado="sucesso" tamanho={160} />
       </motion.div>
       <h1 className="text-3xl font-extrabold">
         {resultado.perfeita ? "Lição perfeita!" : "Lição concluída!"}
@@ -87,9 +85,9 @@ export function ResultadoDaLicao({ resultado }: { resultado: Resultado }) {
       {resultado.moduloConcluido && (
         <section className="flex w-full flex-col gap-3 rounded-padrao bg-aviso p-4">
           <p className="font-extrabold">Você concluiu o módulo {resultado.moduloConcluido.titulo}!</p>
-          {emitir.data ? (
+          {resultado.moduloConcluido.certificadoLiberado ? (
             <a
-              href={enderecoDoPdf(emitir.data.codigo)}
+              href={enderecoDoPdf(resultado.moduloConcluido.codigoDoCertificado)}
               download
               className="flex min-h-11 items-center justify-center gap-2 rounded-padrao bg-primaria text-lg font-extrabold text-white"
             >
@@ -97,15 +95,11 @@ export function ResultadoDaLicao({ resultado }: { resultado: Resultado }) {
               Baixar certificado
             </a>
           ) : (
-            <Botao
-              larguraTotal
-              disabled={emitir.isPending}
-              onClick={() => resultado.moduloConcluido && emitir.mutate(resultado.moduloConcluido.id)}
-            >
-              Gerar meu certificado
-            </Botao>
+            <p className="flex items-center gap-2 font-bold">
+              <Icone nome="cadeado" />
+              Seu certificado já está garantido. Ele fica disponível para baixar assim que a equipe liberar.
+            </p>
           )}
-          {emitir.isError && <MensagemDeErro erro={emitir.error} />}
         </section>
       )}
 

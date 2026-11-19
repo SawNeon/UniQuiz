@@ -36,6 +36,11 @@ public enum AcaoAuditada {
     ENTRADA_DO_COLABORADOR("Entrou no app"),
     SAIDA_DO_COLABORADOR("Saiu do app"),
     RELATORIO_EXPORTADO("Exportou um relatório"),
+    MODELO_DE_CERTIFICADO_EDITADO("Editou a posição dos campos do certificado"),
+    ARTE_DO_CERTIFICADO_ENVIADA("Enviou a arte do certificado"),
+    ARTE_DO_CERTIFICADO_REMOVIDA("Removeu a arte do certificado"),
+    LIBERACAO_DO_CERTIFICADO_ALTERADA("Liberou ou travou o certificado de um módulo"),
+    CERTIFICADOS_EXPORTADOS("Exportou certificados"),
     ACAO_NAO_CATALOGADA("Ação do painel sem descrição");
 
     private final String descricao;

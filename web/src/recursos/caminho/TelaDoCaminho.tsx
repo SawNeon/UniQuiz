@@ -4,6 +4,7 @@ import type { LicaoNoCaminho, ModuloNoCaminho } from "../../api/tipos";
 import { Carregando, MensagemDeErro } from "../../componentes/ui/Estados";
 import { Icone } from "../../componentes/ui/Icone";
 import { Mascote } from "../../mascote/Mascote";
+import { tocar } from "../../sons/sons";
 
 const DESLOCAMENTOS = ["translate-x-0", "translate-x-16", "translate-x-0", "-translate-x-16"];
 
@@ -11,7 +12,7 @@ export function TelaDoCaminho() {
   const caminho = useCaminho();
 
   if (caminho.isPending) {
-    return <Carregando texto="Montando o seu caminho…" />;
+    return <Carregando texto="Montando o seu caminho…" comMascote />;
   }
   if (caminho.isError) {
     return <MensagemDeErro erro={caminho.error} aoTentarDeNovo={() => void caminho.refetch()} />;
@@ -19,7 +20,7 @@ export function TelaDoCaminho() {
   if (caminho.data.length === 0) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
-        <Mascote estado="neutro" />
+        <Mascote estado="padrao" tamanho={88} />
         <p className="text-lg font-bold">A TI está preparando os primeiros desafios. Volte em breve!</p>
       </div>
     );
@@ -27,9 +28,36 @@ export function TelaDoCaminho() {
 
   return (
     <div className="flex flex-col gap-10">
+      <RecadoDoTiuv modulos={caminho.data} />
       {caminho.data.map((modulo, indice) => (
         <Modulo key={modulo.id} modulo={modulo} numero={indice + 1} />
       ))}
+    </div>
+  );
+}
+
+function textoDoRecado(modulos: ModuloNoCaminho[], primeiroNome: string | undefined): string {
+  const saudacao = primeiroNome ? `Oi, ${primeiroNome}!` : "Oi!";
+  const emAndamento = modulos.find((modulo) => !modulo.concluido);
+  if (!emAndamento) {
+    return `${saudacao} Você concluiu tudo por enquanto. Parabéns!`;
+  }
+  const faltam = emAndamento.licoes.length - emAndamento.licoesConcluidas;
+  if (faltam <= 0) {
+    return `${saudacao} Escolha uma lição para continuar.`;
+  }
+  return faltam === 1
+    ? `${saudacao} Falta 1 lição para fechar o módulo.`
+    : `${saudacao} Faltam ${faltam} lições para fechar o módulo.`;
+}
+
+function RecadoDoTiuv({ modulos }: { modulos: ModuloNoCaminho[] }) {
+  const perfil = usePerfil();
+  const primeiroNome = perfil.data?.nome.split(" ")[0];
+  return (
+    <div className="flex items-center gap-3">
+      <Mascote estado="padrao" tamanho={80} className="shrink-0" />
+      <p className="rounded-padrao bg-acerto-suave p-3 font-bold">{textoDoRecado(modulos, primeiroNome)}</p>
     </div>
   );
 }
@@ -54,7 +82,15 @@ function Modulo({ modulo, numero }: { modulo: ModuloNoCaminho; numero: number })
               Estudar o conteúdo
             </Link>
           )}
-          {modulo.concluido && <BotaoDeCertificado moduloId={modulo.id} />}
+          {modulo.concluido &&
+            (modulo.certificadoLiberado ? (
+              <BotaoDeCertificado moduloId={modulo.id} />
+            ) : (
+              <p className="flex min-h-11 items-center gap-2 rounded-padrao bg-white/20 px-4 font-extrabold">
+                <Icone nome="cadeado" />
+                Certificado garantido, aguardando liberação
+              </p>
+            ))}
         </div>
       </div>
 
@@ -89,6 +125,7 @@ function NoDaLicao({ licao }: { licao: LicaoNoCaminho }) {
         <span
           role="img"
           aria-label={`Lição bloqueada: ${licao.titulo}`}
+          onClick={() => tocar("negado")}
           className="flex size-[72px] items-center justify-center rounded-[22px] bg-neutro"
         >
           <Icone nome="cadeado" tamanho={28} />
@@ -103,6 +140,7 @@ function NoDaLicao({ licao }: { licao: LicaoNoCaminho }) {
     <div className="flex flex-col items-center gap-2">
       <Link
         to={`/licoes/${licao.id}`}
+        onClick={() => tocar("abrir")}
         aria-label={atual ? `Começar a lição: ${licao.titulo}` : `Refazer a lição concluída: ${licao.titulo}`}
         className={
           atual

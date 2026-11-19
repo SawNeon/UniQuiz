@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ServicoDeImportacao {
 
+    private static final int TAMANHO_MAXIMO_DA_PLANILHA = 2 * 1024 * 1024;
+
     private final LeitorDePlanilha leitor;
     private final EmpresaRepository empresas;
     private final SetorRepository setores;
@@ -94,6 +96,9 @@ public class ServicoDeImportacao {
     }
 
     private PlanoDeImportacao planejar(String nomeDoArquivo, byte[] conteudo) {
+        if (conteudo.length > TAMANHO_MAXIMO_DA_PLANILHA) {
+            throw new ErroDeNegocio("A planilha pode ter no máximo 2 MB.");
+        }
         List<LinhaDaPlanilha> linhas = leitor.ler(nomeDoArquivo, conteudo);
         Map<Long, String> nomesDasEmpresas =
                 empresas.findAll().stream().collect(Collectors.toMap(Empresa::getId, Empresa::getNome));

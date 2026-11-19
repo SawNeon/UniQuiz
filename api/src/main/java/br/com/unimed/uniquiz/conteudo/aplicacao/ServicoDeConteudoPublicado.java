@@ -11,6 +11,7 @@ import br.com.unimed.uniquiz.conteudo.persistencia.Modulo;
 import br.com.unimed.uniquiz.conteudo.persistencia.ModuloRepository;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,7 @@ public class ServicoDeConteudoPublicado {
                         modulo.getTitulo(),
                         modulo.getDescricao(),
                         modulo.getMaterialEstudo() != null,
+                        modulo.isCertificadoLiberado(),
                         licoesPorModulo.getOrDefault(modulo.getId(), List.of())))
                 .filter(modulo -> !modulo.licoes().isEmpty())
                 .toList();
@@ -60,6 +62,16 @@ public class ServicoDeConteudoPublicado {
                 .filter(modulo -> modulo.id().equals(moduloId))
                 .findFirst()
                 .orElseThrow(() -> new RecursoNaoEncontrado("Módulo não encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean certificadoLiberado(Long moduloId) {
+        return modulos.findById(moduloId).map(Modulo::isCertificadoLiberado).orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public Set<Long> modulosComCertificadoLiberado() {
+        return modulos.idsComCertificadoLiberado();
     }
 
     @Transactional(readOnly = true)

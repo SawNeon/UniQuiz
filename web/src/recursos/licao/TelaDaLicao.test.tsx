@@ -64,7 +64,12 @@ const resultado: ResultadoDaLicao = {
       icone: "passo",
     },
   ],
-  moduloConcluido: { id: 20, titulo: "IA com responsabilidade" },
+  moduloConcluido: {
+    id: 20,
+    titulo: "IA com responsabilidade",
+    certificadoLiberado: true,
+    codigoDoCertificado: "ABCD2345EFGH",
+  },
 };
 
 describe("TelaDaLicao", () => {
@@ -91,14 +96,6 @@ describe("TelaDaLicao", () => {
         return { corpo: correcao({ correta: true, segundaChance: true, explicacao: "Agora sim." }) };
       },
       "POST /tentativas/9/concluir": { corpo: resultado },
-      "POST /modulos/20/certificado": {
-        corpo: {
-          codigo: "ABCD2345EFGH",
-          moduloId: 20,
-          modulo: "IA com responsabilidade",
-          emitidoEm: "2026-11-10",
-        },
-      },
     });
     renderizar(<TelaDaLicao />, { rota: "/licoes/7", caminho: "/licoes/:licaoId" });
 
@@ -133,8 +130,7 @@ describe("TelaDaLicao", () => {
     expect(screen.getByText("1 min 5 s")).toBeInTheDocument();
     expect(screen.getByText("Troféu novo: Primeiro passo")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Gerar meu certificado" }));
-    expect(await screen.findByRole("link", { name: "Baixar certificado" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Baixar certificado" })).toHaveAttribute(
       "href",
       "/api/certificados/ABCD2345EFGH/pdf",
     );

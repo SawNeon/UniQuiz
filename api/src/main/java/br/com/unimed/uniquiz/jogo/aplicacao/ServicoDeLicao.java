@@ -1,5 +1,7 @@
 package br.com.unimed.uniquiz.jogo.aplicacao;
 
+import br.com.unimed.uniquiz.certificado.aplicacao.ServicoDeCertificados;
+import br.com.unimed.uniquiz.certificado.aplicacao.ServicoDeCertificados.CertificadoVista;
 import br.com.unimed.uniquiz.classificacao.aplicacao.ServicoDePontos;
 import br.com.unimed.uniquiz.classificacao.aplicacao.ServicoDeTemporadas;
 import br.com.unimed.uniquiz.classificacao.dominio.Ganho;
@@ -55,7 +57,7 @@ public class ServicoDeLicao {
             boolean segundaChance,
             List<Long> desafiosParaSegundaChance) {}
 
-    public record ModuloConcluido(Long id, String titulo) {}
+    public record ModuloConcluido(Long id, String titulo, boolean certificadoLiberado, String codigoDoCertificado) {}
 
     public record ResultadoDaLicao(
             int acertos,
@@ -73,6 +75,7 @@ public class ServicoDeLicao {
     private final ServicoDeTemporadas temporadas;
     private final ServicoDePontos pontos;
     private final ServicoDeTrofeus trofeus;
+    private final ServicoDeCertificados certificados;
     private final TentativaRepository tentativas;
     private final DesafioDaTentativaRepository desafiosDaTentativa;
     private final RespostaRepository respostas;
@@ -88,6 +91,7 @@ public class ServicoDeLicao {
             ServicoDeTemporadas temporadas,
             ServicoDePontos pontos,
             ServicoDeTrofeus trofeus,
+            ServicoDeCertificados certificados,
             TentativaRepository tentativas,
             DesafioDaTentativaRepository desafiosDaTentativa,
             RespostaRepository respostas,
@@ -101,6 +105,7 @@ public class ServicoDeLicao {
         this.temporadas = temporadas;
         this.pontos = pontos;
         this.trofeus = trofeus;
+        this.certificados = certificados;
         this.tentativas = tentativas;
         this.desafiosDaTentativa = desafiosDaTentativa;
         this.respostas = respostas;
@@ -258,6 +263,8 @@ public class ServicoDeLicao {
                 new RegrasDeTrofeus.Situacao(true, perfeita, sequencia.diasAtuais(), moduloConcluido, trilhaConcluida),
                 agora);
 
+        CertificadoVista certificado = moduloConcluido ? certificados.emitirNaConclusao(colaboradorId, moduloId) : null;
+
         return new ResultadoDaLicao(
                 tentativa.getAcertos(),
                 tentativa.getTotal(),
@@ -267,10 +274,13 @@ public class ServicoDeLicao {
                 ganhos.stream().mapToInt(Ganho::pontos).sum(),
                 sequencia.diasAtuais(),
                 novos,
-                moduloConcluido
-                        ? new ModuloConcluido(
-                                moduloId, conteudo.modulo(moduloId).titulo())
-                        : null);
+                certificado == null
+                        ? null
+                        : new ModuloConcluido(
+                                moduloId,
+                                conteudo.modulo(moduloId).titulo(),
+                                certificado.liberado(),
+                                certificado.codigo()));
     }
 
     private Tentativa tentativaDoColaborador(Long colaboradorId, Long tentativaId) {
